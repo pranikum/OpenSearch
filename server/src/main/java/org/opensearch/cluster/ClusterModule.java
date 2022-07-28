@@ -35,19 +35,7 @@ package org.opensearch.cluster;
 import org.opensearch.cluster.action.index.MappingUpdatedAction;
 import org.opensearch.cluster.action.index.NodeMappingRefreshAction;
 import org.opensearch.cluster.action.shard.ShardStateAction;
-import org.opensearch.cluster.metadata.ComponentTemplateMetadata;
-import org.opensearch.cluster.metadata.ComposableIndexTemplateMetadata;
-import org.opensearch.cluster.metadata.DataStreamMetadata;
-import org.opensearch.cluster.metadata.IndexGraveyard;
-import org.opensearch.cluster.metadata.IndexNameExpressionResolver;
-import org.opensearch.cluster.metadata.Metadata;
-import org.opensearch.cluster.metadata.MetadataDeleteIndexService;
-import org.opensearch.cluster.metadata.MetadataIndexAliasesService;
-import org.opensearch.cluster.metadata.MetadataIndexStateService;
-import org.opensearch.cluster.metadata.MetadataIndexTemplateService;
-import org.opensearch.cluster.metadata.MetadataMappingService;
-import org.opensearch.cluster.metadata.MetadataUpdateSettingsService;
-import org.opensearch.cluster.metadata.RepositoriesMetadata;
+import org.opensearch.cluster.metadata.*;
 import org.opensearch.cluster.routing.DelayedAllocationService;
 import org.opensearch.cluster.routing.allocation.AllocationService;
 import org.opensearch.cluster.routing.allocation.ExistingShardsAllocator;
@@ -190,6 +178,10 @@ public class ClusterModule extends AbstractModule {
             ComposableIndexTemplateMetadata::readDiffFrom
         );
         registerMetadataCustom(entries, DataStreamMetadata.TYPE, DataStreamMetadata::new, DataStreamMetadata::readDiffFrom);
+        registerMetadataCustom(entries,
+            DecommissionedAttributesMetadata.TYPE,
+            DecommissionedAttributesMetadata::new,
+            DecommissionedAttributesMetadata::readDiffFrom);
         // Task Status (not Diffable)
         entries.add(new Entry(Task.Status.class, PersistentTasksNodeService.Status.NAME, PersistentTasksNodeService.Status::new));
         return entries;
@@ -271,6 +263,13 @@ public class ClusterModule extends AbstractModule {
                 Metadata.Custom.class,
                 new ParseField(DataStreamMetadata.TYPE),
                 DataStreamMetadata::fromXContent
+            )
+        );
+        entries.add(
+            new NamedXContentRegistry.Entry(
+                Metadata.Custom.class,
+                new ParseField(DecommissionedAttributesMetadata.TYPE),
+                DecommissionedAttributesMetadata::fromXContent
             )
         );
         return entries;

@@ -35,6 +35,7 @@ package org.opensearch.action.search;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.TopFieldDocs;
 import org.opensearch.action.ActionListener;
+import org.opensearch.action.indexstore.IndexStoreRequest;
 import org.opensearch.cluster.ClusterState;
 import org.opensearch.cluster.routing.GroupShardsIterator;
 import org.opensearch.search.SearchPhaseResult;
@@ -63,7 +64,7 @@ public class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<S
     // informations to track the best bottom top doc globally.
     private final int topDocsSize;
     private final int trackTotalHitsUpTo;
-    private boolean isMigration = false;
+    private IndexStoreRequest indexStoreRequest;
     private volatile BottomSortValuesCollector bottomSortCollector;
 
     public SearchQueryThenFetchAsyncAction(
@@ -121,8 +122,8 @@ public class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<S
         );
     }
 
-    public void setMigration(boolean isMigration) {
-        this.isMigration = isMigration;
+    public void setIndexStoreRequest(IndexStoreRequest indexStoreRequest) {
+        this.indexStoreRequest = indexStoreRequest;
     }
 
     protected void executePhaseOnShard(
@@ -167,7 +168,7 @@ public class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<S
 
     @Override
     protected SearchPhase getNextPhase(final SearchPhaseResults<SearchPhaseResult> results, SearchPhaseContext context) {
-        return new FetchSearchPhase(results, searchPhaseController, null, this, isMigration);
+        return new FetchSearchPhase(results, searchPhaseController, null, this, indexStoreRequest);
     }
 
     private ShardSearchRequest rewriteShardSearchRequest(ShardSearchRequest request) {

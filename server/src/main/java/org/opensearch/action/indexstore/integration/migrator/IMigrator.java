@@ -8,10 +8,12 @@
 
 package org.opensearch.action.indexstore.integration.migrator;
 
+import org.opensearch.search.SearchHit;
+
 import java.util.Map;
 
 public interface IMigrator {
 
-    void migrate(Map payload);
+    void migrate(SearchHit[] searchHits);
 
 }

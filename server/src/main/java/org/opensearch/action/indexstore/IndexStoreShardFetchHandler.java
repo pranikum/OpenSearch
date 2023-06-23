@@ -8,67 +8,37 @@
 
 package org.opensearch.action.indexstore;
 
+import org.opensearch.action.indexstore.integration.migrator.IMigrator;
+import org.opensearch.action.indexstore.integration.migrator.redshift.RedshiftMigrator;
+import org.opensearch.action.indexstore.integration.migrator.s3.S3Migrator;
 import org.opensearch.search.SearchHit;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class IndexStoreShardFetchHandler {
 
+    private String index;
+    private String storeType;
+    private String format;
+
+    public IndexStoreShardFetchHandler(String index, String storeType, String format) {
+        this.index = index;
+        this.storeType = storeType;
+        this.format = format;
+    }
+
     public void handleShard(SearchHit[] hits) {
-        List<String> keyList;
-        if(hits.length > 0) {
-            List<String> headerFields = new ArrayList<>();
-            Map<String, Object> sourceMap = hits[0].getSourceAsMap();
-            Set<String> keys = sourceMap.keySet();
-
-            keyList = new ArrayList<>(keys);
-            CSVData csvData = new CSVData();
-            String header = buildHeader(keyList);
-            csvData.header = header;
-
-            StringBuilder csvContent = new StringBuilder();
-            for(int i=0; i<hits.length; i++) {
-                sourceMap = hits[i].getSourceAsMap();
-                for(int j=0; j < keyList.size(); j++) {
-                    csvContent.append(sourceMap.get(keyList.get(j)).toString());
-                    csvContent.append(",");
-                }
-                csvContent.deleteCharAt(csvContent.length()-1);
-                csvContent.append(System.lineSeparator());
-            }
-            csvData.payload = csvContent.toString();
-
-            System.out.println(csvData);
+        IMigrator migrator = getStoreMigrator();
+        if (migrator != null) {
+            migrator.migrate(hits);
         }
     }
 
-    class CSVData {
-        String header;
-        String payload;
-
-        @Override
-        public String toString() {
-            return header + payload;
+    private IMigrator getStoreMigrator() {
+        IMigrator migrator = null;
+        if("s3".equalsIgnoreCase(this.storeType)) {
+            migrator = new S3Migrator(this.format);
+        } else if("Redshift".equalsIgnoreCase(this.storeType)) {
+            migrator = new RedshiftMigrator(this.index);
         }
-    }
-
-    private String buildHeader(List<String> keyList) {
-        String header = "";
-        System.out.println("keyList = " + keyList);
-        StringBuilder builder = new StringBuilder();
-        if(keyList != null && keyList.size() > 0) {
-
-            for (String key : keyList) {
-                builder.append(key);
-                builder.append(",");
-            }
-            builder.deleteCharAt(builder.length()-1);
-            builder.append(System.lineSeparator());
-
-        }
-        return builder.toString();
+        return migrator;
     }
 }

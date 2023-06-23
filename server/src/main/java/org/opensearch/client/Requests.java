@@ -608,7 +608,7 @@ public class Requests {
         return new DeleteDecommissionStateRequest();
     }
 
-    public static IndexStoreRequest indexStoreRequest(String indexName) {
-        return new IndexStoreRequest(indexName);
+    public static IndexStoreRequest indexStoreRequest(String indexName, String type, String format) {
+        return new IndexStoreRequest(indexName, type, format);
     }
 }

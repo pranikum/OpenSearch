@@ -27,7 +27,7 @@ public class RestIndexStoreAction extends BaseRestHandler {
 
     @Override
     public List<Route> routes() {
-        return singletonList(new Route(PUT, "/indices/{index_name}/store"));
+        return singletonList(new Route(PUT, "/indices/{index_name}/store/{type}"));
     }
 
     @Override
@@ -42,11 +42,14 @@ public class RestIndexStoreAction extends BaseRestHandler {
     }
 
     IndexStoreRequest createRequest(RestRequest request) throws IOException {
-
+        System.out.println("Request params " + request.params());
         String indexName = request.param("index_name");
-        String storeName = request.param("store_name");
-        String storeFormat = request.param("store_format");
-        IndexStoreRequest indexStoreRequest = Requests.indexStoreRequest(indexName);
+        String storeName = request.param("type");
+        String storeFormat = request.param("format");
+
+        System.out.println("Index is " + indexName + " Type is " + storeName + " format is " + storeFormat);
+
+        IndexStoreRequest indexStoreRequest = Requests.indexStoreRequest(indexName, storeName, storeFormat);
         return indexStoreRequest;
     }
 }

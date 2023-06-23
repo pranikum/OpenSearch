@@ -66,18 +66,10 @@ public class ShardFetchRequest extends TransportRequest {
     private int size;
 
     private ScoreDoc lastEmittedDoc;
-
-    public boolean isMigration() {
-        return isMigration;
-    }
-
-    public void setMigration(boolean migration) {
-        isMigration = migration;
-    }
-
     private boolean isMigration;
-
-
+    private String index = "";
+    private String type = "";
+    private String format = "";
 
     public ShardFetchRequest(ShardSearchContextId contextId, IntArrayList list, ScoreDoc lastEmittedDoc) {
         this.contextId = contextId;
@@ -85,14 +77,6 @@ public class ShardFetchRequest extends TransportRequest {
         this.size = list.size();
         this.lastEmittedDoc = lastEmittedDoc;
         this.isMigration = false;
-    }
-
-    public ShardFetchRequest(ShardSearchContextId contextId, IntArrayList list, ScoreDoc lastEmittedDoc, boolean isMigration) {
-        this.contextId = contextId;
-        this.docIds = list.buffer;
-        this.size = list.size();
-        this.lastEmittedDoc = lastEmittedDoc;
-        this.isMigration = isMigration;
     }
 
     public ShardFetchRequest(StreamInput in) throws IOException {
@@ -112,6 +96,10 @@ public class ShardFetchRequest extends TransportRequest {
             throw new IOException("Unknown flag: " + flag);
         }
         isMigration = in.readBoolean();
+
+        index = in.readString();
+        type = in.readString();
+        format = in.readString();
     }
 
     @Override
@@ -132,7 +120,21 @@ public class ShardFetchRequest extends TransportRequest {
             Lucene.writeScoreDoc(out, lastEmittedDoc);
         }
         out.writeBoolean(isMigration);
+
+            out.writeString(index);
+            out.writeString(type);
+            out.writeString(format);
+
     }
+
+    public boolean isMigration() {
+        return isMigration;
+    }
+
+    public void setMigration(boolean migration) {
+        isMigration = migration;
+    }
+
 
     public ShardSearchContextId contextId() {
         return contextId;
@@ -148,6 +150,30 @@ public class ShardFetchRequest extends TransportRequest {
 
     public ScoreDoc lastEmittedDoc() {
         return lastEmittedDoc;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
     }
 
     @Override

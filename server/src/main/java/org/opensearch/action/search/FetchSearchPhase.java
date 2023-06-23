@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.lucene.search.ScoreDoc;
 import org.opensearch.action.OriginalIndices;
+import org.opensearch.action.indexstore.IndexStoreRequest;
 import org.opensearch.common.util.concurrent.AbstractRunnable;
 import org.opensearch.common.util.concurrent.AtomicArray;
 import org.opensearch.search.RescoreDocIds;
@@ -70,7 +71,7 @@ final class FetchSearchPhase extends SearchPhase {
     private final SearchProgressListener progressListener;
     private final AggregatedDfs aggregatedDfs;
 
-    private boolean isMigration;
+    private IndexStoreRequest indexStoreRequest;
 
     FetchSearchPhase(
         SearchPhaseResults<SearchPhaseResult> resultConsumer,
@@ -92,7 +93,7 @@ final class FetchSearchPhase extends SearchPhase {
             SearchPhaseController searchPhaseController,
             AggregatedDfs aggregatedDfs,
             SearchPhaseContext context,
-            boolean isMigration
+            IndexStoreRequest indexStoreRequest
     ) {
         this(
                 resultConsumer,
@@ -101,7 +102,7 @@ final class FetchSearchPhase extends SearchPhase {
                 context,
                 (response, queryPhaseResults) -> new ExpandSearchPhase(context, response, queryPhaseResults)
         );
-        this.isMigration = isMigration;
+        this.indexStoreRequest = indexStoreRequest;
     }
 
     FetchSearchPhase(
@@ -214,7 +215,13 @@ final class FetchSearchPhase extends SearchPhase {
                             queryResult.getShardSearchRequest(),
                             queryResult.getRescoreDocIds()
                         );
-                        fetchSearchRequest.setMigration(isMigration);
+                        if (indexStoreRequest != null) {
+                            fetchSearchRequest.setMigration(true);
+                            fetchSearchRequest.setIndex(indexStoreRequest.getIndex());
+                            fetchSearchRequest.setType(indexStoreRequest.getType());
+                            fetchSearchRequest.setFormat(indexStoreRequest.getFormat());
+                        }
+
                         executeFetch(i, searchShardTarget, counter, fetchSearchRequest, queryResult.queryResult(), connection);
                     }
                 }

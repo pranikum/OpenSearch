@@ -8,12 +8,70 @@
 
 package org.opensearch.action.indexstore.integration.migrator.redshift;
 
-import java.util.Map;
 import org.opensearch.action.indexstore.integration.migrator.IMigrator;
+import org.opensearch.search.SearchHit;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class RedshiftMigrator implements IMigrator {
-    @Override
-    public void migrate(Map payload) {
 
+    private final String indexName;
+
+    public RedshiftMigrator(String indexName) {
+        this.indexName = indexName;
+    }
+
+    @Override
+    public void migrate(SearchHit[] hits) {
+        List<String> keyList;
+        List<String> fields = null;
+        List<Map<String, Object>> dataMap = null;
+        if(hits.length > 0) {
+            Map<String, Object> sourceMap = hits[0].getSourceAsMap();
+            Set<String> keys = sourceMap.keySet();
+            fields = new ArrayList<>(keys);
+
+            for(int i=0; i<hits.length; i++) {
+                dataMap.add(sourceMap);
+            }
+        }
+        try {
+            migrateDataToRedshift(fields, dataMap);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void migrateDataToRedshift(List<String> fields, List<Map<String, Object>> sourceMap) throws SQLException {
+        Connection connection = null;
+        try {
+            RedshiftConnector connector = new RedshiftConnector();
+            connection = connector.getConnection();
+            connector.createTable(connection, indexName, fields);
+            connector.insertData(connection, indexName, fields, sourceMap);
+        } finally {
+            if(connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        RedshiftMigrator migrator = new RedshiftMigrator("index");
+        List<String> cols = List.of("Name", "email", "phone", "Id");
+        List<Map<String, Object>> datamap = new ArrayList<>();
+
+        for(int i=0; i<5; i++) {
+            Map<String, Object> rowMap = new HashMap<>();
+            rowMap.put("Name", "test" + i);
+            rowMap.put("email", "test" + i + "@gmail.com");
+        }
     }
 }

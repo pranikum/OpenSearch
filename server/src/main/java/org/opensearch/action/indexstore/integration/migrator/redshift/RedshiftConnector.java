@@ -8,22 +8,122 @@
 
 package org.opensearch.action.indexstore.integration.migrator.redshift;
 
+import org.opensearch.common.Strings;
+import org.opensearch.common.util.CollectionUtils;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class RedshiftConnector {
 
-    public void getConnection() {
+    private static final String REDSHIFT_JDBC_ENDPOINT = "jdbc:redshift://redshift-hackathon-cluster-1.c8nyoqxrpmls.ap-south-1.redshift.amazonaws.com:5439/dev";
+    private static final String REDSHIFT_USER_NAME = "hackathonuser";
+    private static final String REDSHIFT_USER_PPWD = "hackath0nPwd";
+
+
+    public Connection getConnection() {
         Connection conn1 = null;
         try {
             Class.forName("com.amazon.redshift.jdbc42.Driver");
-            conn1 = DriverManager.getConnection("jdbc:redshift://redshift-dc2-test.ctzrqaulg0u6.us-east-1.redshift.amazonaws.com:5439/testdb", "awsuser","Awsuser1234");
+            conn1 = DriverManager.getConnection(REDSHIFT_JDBC_ENDPOINT, REDSHIFT_USER_NAME,REDSHIFT_USER_PPWD);
             if (conn1 != null) {
                 System.out.println("Connected with connection #1");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return conn1;
+    }
 
+    public void createTable(Connection connection, String tableName, List<String> fields) throws SQLException {
+        Statement statement = null;
+        System.out.println("Creating Table with table name.." + tableName);
+        String createTableQuery = buildCreateTableQuery(tableName, fields);
+        try {
+            if(createTableQuery == null || createTableQuery.isBlank()) {
+                return;
+            }
+            statement = connection.createStatement();
+            statement.executeUpdate(createTableQuery);
+            System.out.println("Table Created with name " + tableName);
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        } finally {
+            closeStatement(statement);
+        }
+    }
+
+    public void insertData(Connection connection, String tableName, List<String> fields, List<Map<String, Object>> valuesMap) throws SQLException {
+        PreparedStatement pStatement = null;
+        try {
+            pStatement = connection.prepareStatement(buildInsertStatement(tableName, fields));
+            for (Map<String, Object> valueMap : valuesMap) {
+                for(int i=0; i<fields.size(); i++) {
+                    pStatement.setString(i, (String)valueMap.get(fields.get(i)));
+                }
+            }
+            pStatement.executeUpdate();
+            System.out.println("Total " + fields.size() + " Rows Inserted in Table " + tableName);
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        } finally {
+            closeStatement(pStatement);
+        }
+    }
+
+    private void closeStatement(Statement statement) {
+        if (statement != null) {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String buildInsertStatement(String tableName, List<String> fields) {
+        if(tableName == null || tableName.isBlank() || CollectionUtils.isEmpty(fields)) {
+            return null;
+        }
+
+        StringBuilder insertStatementBuilder = new StringBuilder();
+        insertStatementBuilder.append("INSERT into " + tableName + "(");
+
+        for (String field : fields) {
+            insertStatementBuilder.append(field + ",");
+        }
+        insertStatementBuilder.deleteCharAt(insertStatementBuilder.length()-1);
+        insertStatementBuilder.append(" values (");
+        for (int i=0; i<fields.size(); i++) {
+            insertStatementBuilder.append("?,");
+        }
+        insertStatementBuilder.deleteCharAt(insertStatementBuilder.length()-1);
+        insertStatementBuilder.append(");");
+
+        System.out.println("insertStatementBuilder = " + insertStatementBuilder);
+        return insertStatementBuilder.toString();
+    }
+
+    private String buildCreateTableQuery(String tableName, List<String> fields) {
+        if(tableName == null || tableName.isBlank() || CollectionUtils.isEmpty(fields)) {
+            return null;
+        }
+
+        StringBuilder createQueryBuilder = new StringBuilder();
+        createQueryBuilder.append("create table " + tableName + "(");
+
+        for (String field : fields) {
+            createQueryBuilder.append(field + " varchar,");
+        }
+        createQueryBuilder.deleteCharAt(createQueryBuilder.length()-1);
+        createQueryBuilder.append(");");
+        System.out.println("createQueryBuilder = " + createQueryBuilder);
+        return createQueryBuilder.toString();
     }
 }

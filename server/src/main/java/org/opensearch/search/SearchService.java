@@ -751,7 +751,14 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
     public void executeFetchPhase(ShardFetchRequest request, SearchShardTask task, ActionListener<FetchSearchResult> listener) {
         final ReaderContext readerContext = findReaderContext(request.contextId(), request);
         final ShardSearchRequest shardSearchRequest = readerContext.getShardSearchRequest(request.getShardSearchRequest());
-        shardSearchRequest.setMigration(request.isMigration());
+
+        if (request.isMigration()) {
+            shardSearchRequest.setMigration(request.isMigration());
+            shardSearchRequest.setIndex(request.getIndex());
+            shardSearchRequest.setType(request.getType());
+            shardSearchRequest.setFormat(request.getFormat());
+        }
+
         final Releasable markAsUsed = readerContext.markAsUsed(getKeepAlive(shardSearchRequest));
         runAsync(getExecutor(readerContext.indexShard()), () -> {
             try (SearchContext searchContext = createContext(readerContext, shardSearchRequest, task, false)) {

@@ -39,13 +39,10 @@ import org.opensearch.common.inject.Inject;
 import org.opensearch.common.io.stream.NamedWriteableRegistry;
 import org.opensearch.common.io.stream.Writeable;
 import org.opensearch.index.Index;
-import org.opensearch.index.query.MatchAllQueryBuilder;
 import org.opensearch.index.query.Rewriteable;
 import org.opensearch.indices.breaker.CircuitBreakerService;
 import org.opensearch.search.SearchHit;
-import org.opensearch.search.SearchService;
 import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.search.fetch.FetchSubPhase;
 import org.opensearch.search.internal.AliasFilter;
 import org.opensearch.tasks.Task;
 import org.opensearch.threadpool.ThreadPool;
@@ -240,7 +237,7 @@ public class TransportIndexStoreAction extends HandledTransportAction<IndexStore
                         searchTask,
                         new SearchResponse.Clusters(1, 1, 0)
                 );
-                searchAsyncAction.setMigration(true);
+                searchAsyncAction.setIndexStoreRequest(request);
                 searchAsyncAction.start();
             }
         }, listener::onFailure);

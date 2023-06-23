@@ -110,8 +110,10 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
     private SearchSourceBuilder source;
     private final ShardSearchContextId readerId;
     private final TimeValue keepAlive;
-
     private boolean isMigration = false;
+    private String index = "";
+    private String type = "";
+    private String format = "";
 
     public ShardSearchRequest(
         OriginalIndices originalIndices,
@@ -235,6 +237,30 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         assert keepAlive == null || readerId != null : "readerId: " + readerId + " keepAlive: " + keepAlive;
     }
 
+    public String getIndex() {
+        return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
     public boolean isMigration() {
         return isMigration;
     }
@@ -273,7 +299,12 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         bottomSortValues = in.readOptionalWriteable(SearchSortValuesAndFormats::new);
         readerId = in.readOptionalWriteable(ShardSearchContextId::new);
         keepAlive = in.readOptionalTimeValue();
+
         isMigration = in.readBoolean();
+        index = in.readString();
+        type = in.readString();
+        format = in.readString();
+
         originalIndices = OriginalIndices.readOriginalIndices(in);
         assert keepAlive == null || readerId != null : "readerId: " + readerId + " keepAlive: " + keepAlive;
 
@@ -301,6 +332,9 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         this.readerId = clone.readerId;
         this.keepAlive = clone.keepAlive;
         this.isMigration = clone.isMigration;
+        this.index = clone.index;
+        this.type = clone.type;
+        this.format = clone.format;
     }
 
     @Override
@@ -347,6 +381,11 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
             out.writeOptionalTimeValue(keepAlive);
         }
         out.writeBoolean(isMigration);
+
+            out.writeString(index);
+            out.writeString(type);
+            out.writeString(format);
+
     }
 
     @Override

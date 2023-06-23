@@ -36,10 +36,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.Constants;
 import org.opensearch.ExceptionsHelper;
-import org.opensearch.common.SetOnce;
 import org.opensearch.common.settings.SettingsException;
 import org.opensearch.common.unit.ByteSizeUnit;
 import org.opensearch.common.unit.ByteSizeValue;
+import org.apache.lucene.util.SetOnce;
+import org.opensearch.action.indexstore.IndexStoreSearchService;
 import org.opensearch.common.util.FeatureFlags;
 import org.opensearch.cluster.routing.allocation.AwarenessReplicaBalance;
 import org.opensearch.index.IndexModule;
@@ -1020,6 +1021,19 @@ public class Node implements Closeable {
                 searchModule.getIndexSearcherExecutor(threadPool)
             );
 
+            final IndexStoreSearchService indexStoreSearchService = new IndexStoreSearchService(
+                    clusterService,
+                    indicesService,
+                    threadPool,
+                    scriptService,
+                    bigArrays,
+                    searchModule.getQueryPhase(),
+                    searchModule.getFetchPhase(),
+                    responseCollectorService,
+                    circuitBreakerService,
+                    searchModule.getIndexSearcherExecutor(threadPool)
+            );
+
             final List<PersistentTasksExecutor<?>> tasksExecutors = pluginsService.filterPlugins(PersistentTaskPlugin.class)
                 .stream()
                 .map(
@@ -1078,6 +1092,7 @@ public class Node implements Closeable {
                 b.bind(AwarenessReplicaBalance.class).toInstance(awarenessReplicaBalance);
                 b.bind(MetadataCreateDataStreamService.class).toInstance(metadataCreateDataStreamService);
                 b.bind(SearchService.class).toInstance(searchService);
+                b.bind(IndexStoreSearchService.class).toInstance(indexStoreSearchService);
                 b.bind(SearchTransportService.class).toInstance(searchTransportService);
                 b.bind(SearchPhaseController.class)
                     .toInstance(new SearchPhaseController(namedWriteableRegistry, searchService::aggReduceContextBuilder));

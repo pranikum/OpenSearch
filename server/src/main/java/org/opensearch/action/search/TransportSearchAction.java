@@ -240,7 +240,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
      *
      * @opensearch.internal
      */
-    static final class SearchTimeProvider {
+    public static final class SearchTimeProvider {
 
         private final long absoluteStartMillis;
         private final long relativeStartNanos;
@@ -257,17 +257,17 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
          * @param relativeStartNanos the relative start time in nanoseconds
          * @param relativeCurrentNanosProvider provides the current relative time
          */
-        SearchTimeProvider(final long absoluteStartMillis, final long relativeStartNanos, final LongSupplier relativeCurrentNanosProvider) {
+        public SearchTimeProvider(final long absoluteStartMillis, final long relativeStartNanos, final LongSupplier relativeCurrentNanosProvider) {
             this.absoluteStartMillis = absoluteStartMillis;
             this.relativeStartNanos = relativeStartNanos;
             this.relativeCurrentNanosProvider = relativeCurrentNanosProvider;
         }
 
-        long getAbsoluteStartMillis() {
+        public long getAbsoluteStartMillis() {
             return absoluteStartMillis;
         }
 
-        long buildTookInMillis() {
+        public long buildTookInMillis() {
             return TimeUnit.NANOSECONDS.toMillis(relativeCurrentNanosProvider.getAsLong() - relativeStartNanos);
         }
     }
@@ -801,7 +801,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         );
     }
 
-    static BiFunction<String, String, DiscoveryNode> getRemoteClusterNodeLookup(Map<String, ClusterSearchShardsResponse> searchShardsResp) {
+    public static BiFunction<String, String, DiscoveryNode> getRemoteClusterNodeLookup(Map<String, ClusterSearchShardsResponse> searchShardsResp) {
         Map<String, Map<String, DiscoveryNode>> clusterToNode = new HashMap<>();
         for (Map.Entry<String, ClusterSearchShardsResponse> entry : searchShardsResp.entrySet()) {
             String clusterAlias = entry.getKey();
@@ -818,7 +818,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         };
     }
 
-    static Map<String, AliasFilter> getRemoteAliasFilters(Map<String, ClusterSearchShardsResponse> searchShardsResp) {
+    public static Map<String, AliasFilter> getRemoteAliasFilters(Map<String, ClusterSearchShardsResponse> searchShardsResp) {
         final Map<String, AliasFilter> aliasFilterMap = new HashMap<>();
         for (Map.Entry<String, ClusterSearchShardsResponse> entry : searchShardsResp.entrySet()) {
             ClusterSearchShardsResponse searchShardsResponse = entry.getValue();
@@ -839,7 +839,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         return aliasFilterMap;
     }
 
-    static List<SearchShardIterator> getRemoteShardsIterator(
+    public static List<SearchShardIterator> getRemoteShardsIterator(
         Map<String, ClusterSearchShardsResponse> searchShardsResponses,
         Map<String, OriginalIndices> remoteIndicesByCluster,
         Map<String, AliasFilter> aliasFilterMap
@@ -1033,7 +1033,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         return onlySystemIndices ? threadPool.executor(ThreadPool.Names.SYSTEM_READ) : threadPool.executor(ThreadPool.Names.SEARCH);
     }
 
-    static BiFunction<String, String, Transport.Connection> buildConnectionLookup(
+    public static BiFunction<String, String, Transport.Connection> buildConnectionLookup(
         String requestClusterAlias,
         Function<String, DiscoveryNode> localNodes,
         BiFunction<String, String, DiscoveryNode> remoteNodes,
@@ -1057,7 +1057,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         };
     }
 
-    static boolean shouldPreFilterSearchShards(ClusterState clusterState, SearchRequest searchRequest, String[] indices, int numShards) {
+    public static boolean shouldPreFilterSearchShards(ClusterState clusterState, SearchRequest searchRequest, String[] indices, int numShards) {
         SearchSourceBuilder source = searchRequest.source();
         Integer preFilterShardSize = searchRequest.getPreFilterShardSize();
         if (preFilterShardSize == null && (hasReadOnlyIndices(indices, clusterState) || hasPrimaryFieldSort(source))) {
@@ -1080,7 +1080,7 @@ public class TransportSearchAction extends HandledTransportAction<SearchRequest,
         return false;
     }
 
-    static GroupShardsIterator<SearchShardIterator> mergeShardsIterators(
+    public static GroupShardsIterator<SearchShardIterator> mergeShardsIterators(
         List<SearchShardIterator> localShardIterators,
         List<SearchShardIterator> remoteShardIterators
     ) {

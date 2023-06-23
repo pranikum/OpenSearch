@@ -156,6 +156,13 @@ dependencies {
   //zstd
   api "com.github.luben:zstd-jni:${versions.zstd}"
 
+//  api "com.amazonaws:aws-java-sdk-s3:${versions.aws}"
+//  api "com.amazonaws:aws-java-sdk-core:${versions.aws}"
+//  api "com.amazonaws:aws-java-sdk-sts:${versions.aws}"
+//  api "com.amazonaws:jmespath-java:${versions.aws}"
+//  api "com.amazon.redshift:redshift-jdbc42:2.1.0.15"
+//  api "software.amazon.awssdk:redshift:2.20.75"
+
   testImplementation(project(":test:framework")) {
     // tests use the locally compiled version of server
     exclude group: 'org.opensearch', module: 'server'

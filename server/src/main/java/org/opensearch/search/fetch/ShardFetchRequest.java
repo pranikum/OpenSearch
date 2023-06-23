@@ -67,11 +67,32 @@ public class ShardFetchRequest extends TransportRequest {
 
     private ScoreDoc lastEmittedDoc;
 
+    public boolean isMigration() {
+        return isMigration;
+    }
+
+    public void setMigration(boolean migration) {
+        isMigration = migration;
+    }
+
+    private boolean isMigration;
+
+
+
     public ShardFetchRequest(ShardSearchContextId contextId, IntArrayList list, ScoreDoc lastEmittedDoc) {
         this.contextId = contextId;
         this.docIds = list.buffer;
         this.size = list.size();
         this.lastEmittedDoc = lastEmittedDoc;
+        this.isMigration = false;
+    }
+
+    public ShardFetchRequest(ShardSearchContextId contextId, IntArrayList list, ScoreDoc lastEmittedDoc, boolean isMigration) {
+        this.contextId = contextId;
+        this.docIds = list.buffer;
+        this.size = list.size();
+        this.lastEmittedDoc = lastEmittedDoc;
+        this.isMigration = isMigration;
     }
 
     public ShardFetchRequest(StreamInput in) throws IOException {
@@ -90,6 +111,7 @@ public class ShardFetchRequest extends TransportRequest {
         } else if (flag != 0) {
             throw new IOException("Unknown flag: " + flag);
         }
+        isMigration = in.readBoolean();
     }
 
     @Override
@@ -109,6 +131,7 @@ public class ShardFetchRequest extends TransportRequest {
             out.writeByte((byte) 2);
             Lucene.writeScoreDoc(out, lastEmittedDoc);
         }
+        out.writeBoolean(isMigration);
     }
 
     public ShardSearchContextId contextId() {

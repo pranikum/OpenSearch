@@ -79,6 +79,7 @@ import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.delete.DeleteRequest;
 import org.opensearch.action.get.GetRequest;
 import org.opensearch.action.index.IndexRequest;
+import org.opensearch.action.indexstore.IndexStoreRequest;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchScrollRequest;
 import org.opensearch.common.xcontent.XContentType;
@@ -605,5 +606,9 @@ public class Requests {
      */
     public static DeleteDecommissionStateRequest deleteDecommissionStateRequest() {
         return new DeleteDecommissionStateRequest();
+    }
+
+    public static IndexStoreRequest indexStoreRequest(String indexName) {
+        return new IndexStoreRequest(indexName);
     }
 }

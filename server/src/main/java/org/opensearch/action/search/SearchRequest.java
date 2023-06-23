@@ -331,7 +331,7 @@ public class SearchRequest extends ActionRequest implements IndicesRequest.Repla
      * returned as part of search hits with the alias of the cluster they came from.
      */
     @Nullable
-    String getLocalClusterAlias() {
+    public String getLocalClusterAlias() {
         return localClusterAlias;
     }
 

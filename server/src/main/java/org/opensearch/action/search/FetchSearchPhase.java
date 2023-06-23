@@ -70,6 +70,8 @@ final class FetchSearchPhase extends SearchPhase {
     private final SearchProgressListener progressListener;
     private final AggregatedDfs aggregatedDfs;
 
+    private boolean isMigration;
+
     FetchSearchPhase(
         SearchPhaseResults<SearchPhaseResult> resultConsumer,
         SearchPhaseController searchPhaseController,
@@ -83,6 +85,23 @@ final class FetchSearchPhase extends SearchPhase {
             context,
             (response, queryPhaseResults) -> new ExpandSearchPhase(context, response, queryPhaseResults)
         );
+    }
+
+    FetchSearchPhase(
+            SearchPhaseResults<SearchPhaseResult> resultConsumer,
+            SearchPhaseController searchPhaseController,
+            AggregatedDfs aggregatedDfs,
+            SearchPhaseContext context,
+            boolean isMigration
+    ) {
+        this(
+                resultConsumer,
+                searchPhaseController,
+                aggregatedDfs,
+                context,
+                (response, queryPhaseResults) -> new ExpandSearchPhase(context, response, queryPhaseResults)
+        );
+        this.isMigration = isMigration;
     }
 
     FetchSearchPhase(
@@ -195,6 +214,7 @@ final class FetchSearchPhase extends SearchPhase {
                             queryResult.getShardSearchRequest(),
                             queryResult.getRescoreDocIds()
                         );
+                        fetchSearchRequest.setMigration(isMigration);
                         executeFetch(i, searchShardTarget, counter, fetchSearchRequest, queryResult.queryResult(), connection);
                     }
                 }

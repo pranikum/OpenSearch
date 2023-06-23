@@ -111,6 +111,8 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
     private final ShardSearchContextId readerId;
     private final TimeValue keepAlive;
 
+    private boolean isMigration = false;
+
     public ShardSearchRequest(
         OriginalIndices originalIndices,
         SearchRequest searchRequest,
@@ -233,6 +235,14 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         assert keepAlive == null || readerId != null : "readerId: " + readerId + " keepAlive: " + keepAlive;
     }
 
+    public boolean isMigration() {
+        return isMigration;
+    }
+
+    public void setMigration(boolean migration) {
+        isMigration = migration;
+    }
+
     public ShardSearchRequest(StreamInput in) throws IOException {
         super(in);
         shardId = new ShardId(in);
@@ -263,8 +273,10 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         bottomSortValues = in.readOptionalWriteable(SearchSortValuesAndFormats::new);
         readerId = in.readOptionalWriteable(ShardSearchContextId::new);
         keepAlive = in.readOptionalTimeValue();
+        isMigration = in.readBoolean();
         originalIndices = OriginalIndices.readOriginalIndices(in);
         assert keepAlive == null || readerId != null : "readerId: " + readerId + " keepAlive: " + keepAlive;
+
     }
 
     public ShardSearchRequest(ShardSearchRequest clone) {
@@ -288,6 +300,7 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
         this.originalIndices = clone.originalIndices;
         this.readerId = clone.readerId;
         this.keepAlive = clone.keepAlive;
+        this.isMigration = clone.isMigration;
     }
 
     @Override
@@ -333,6 +346,7 @@ public class ShardSearchRequest extends TransportRequest implements IndicesReque
             out.writeOptionalWriteable(readerId);
             out.writeOptionalTimeValue(keepAlive);
         }
+        out.writeBoolean(isMigration);
     }
 
     @Override

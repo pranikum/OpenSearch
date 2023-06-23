@@ -98,6 +98,9 @@ public abstract class SearchContext implements Releasable {
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private InnerHitsContext innerHitsContext;
 
+
+    private boolean isMigration;
+
     protected SearchContext() {}
 
     public abstract void setTask(SearchShardTask task);
@@ -418,6 +421,14 @@ public abstract class SearchContext implements Releasable {
     public abstract Map<Class<?>, CollectorManager<? extends Collector, ReduceableSearchResult>> queryCollectorManagers();
 
     public abstract QueryShardContext getQueryShardContext();
+
+    public boolean isMigration() {
+        return isMigration;
+    }
+
+    public void setMigration(boolean migration) {
+        isMigration = migration;
+    }
 
     @Override
     public String toString() {

@@ -43,6 +43,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TotalHits;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.BitSet;
+import org.opensearch.action.indexstore.IndexStoreShardFetchHandler;
 import org.opensearch.common.CheckedBiConsumer;
 import org.opensearch.common.collect.Tuple;
 import org.opensearch.common.document.DocumentField;
@@ -97,6 +98,7 @@ public class FetchPhase {
     private static final Logger LOGGER = LogManager.getLogger(FetchPhase.class);
 
     private final FetchSubPhase[] fetchSubPhases;
+    protected SearchHit[] hits;
 
     public FetchPhase(List<FetchSubPhase> fetchSubPhases) {
         this.fetchSubPhases = fetchSubPhases.toArray(new FetchSubPhase[fetchSubPhases.size() + 1]);
@@ -190,6 +192,12 @@ public class FetchPhase {
         TotalHits totalHits = context.queryResult().getTotalHits();
         context.fetchResult().hits(new SearchHits(hits, totalHits, context.queryResult().getMaxScore()));
 
+        LOGGER.info("Migration value is " + context.request().isMigration());
+        if(context.request().isMigration()) {
+            this.hits = hits;
+            IndexStoreShardFetchHandler indexStoreShardFetchHandler = new IndexStoreShardFetchHandler();
+            indexStoreShardFetchHandler.handleShard(this.hits);
+        }
     }
 
     List<FetchSubPhaseProcessor> getProcessors(SearchShardTarget target, FetchContext context) {

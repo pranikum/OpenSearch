@@ -743,7 +743,7 @@ public final class SearchPhaseController {
     /**
      * Returns a new {@link QueryPhaseResultConsumer} instance that reduces search responses incrementally.
      */
-    QueryPhaseResultConsumer newSearchPhaseResults(
+    public QueryPhaseResultConsumer newSearchPhaseResults(
         Executor executor,
         CircuitBreaker circuitBreaker,
         SearchProgressListener listener,

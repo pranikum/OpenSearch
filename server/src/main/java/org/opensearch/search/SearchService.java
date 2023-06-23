@@ -273,7 +273,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
 
     private final QueryPhase queryPhase;
 
-    private final FetchPhase fetchPhase;
+    private FetchPhase fetchPhase;
 
     private volatile long defaultKeepAlive;
 
@@ -621,7 +621,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
         }
     }
 
-    private QueryFetchSearchResult executeFetchPhase(ReaderContext reader, SearchContext context, long afterQueryTime) {
+    protected QueryFetchSearchResult executeFetchPhase(ReaderContext reader, SearchContext context, long afterQueryTime) {
         try (SearchOperationListenerExecutor executor = new SearchOperationListenerExecutor(context, true, afterQueryTime)) {
             shortcutDocIdsToLoad(context);
             fetchPhase.execute(context);
@@ -751,6 +751,7 @@ public class SearchService extends AbstractLifecycleComponent implements IndexEv
     public void executeFetchPhase(ShardFetchRequest request, SearchShardTask task, ActionListener<FetchSearchResult> listener) {
         final ReaderContext readerContext = findReaderContext(request.contextId(), request);
         final ShardSearchRequest shardSearchRequest = readerContext.getShardSearchRequest(request.getShardSearchRequest());
+        shardSearchRequest.setMigration(request.isMigration());
         final Releasable markAsUsed = readerContext.markAsUsed(getKeepAlive(shardSearchRequest));
         runAsync(getExecutor(readerContext.indexShard()), () -> {
             try (SearchContext searchContext = createContext(readerContext, shardSearchRequest, task, false)) {

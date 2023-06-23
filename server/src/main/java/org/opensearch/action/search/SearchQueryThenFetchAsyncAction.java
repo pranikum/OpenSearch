@@ -55,7 +55,7 @@ import java.util.function.BiFunction;
  *
  * @opensearch.internal
  */
-class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPhaseResult> {
+public class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPhaseResult> {
 
     private final SearchPhaseController searchPhaseController;
     private final SearchProgressListener progressListener;
@@ -63,9 +63,10 @@ class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPh
     // informations to track the best bottom top doc globally.
     private final int topDocsSize;
     private final int trackTotalHitsUpTo;
+    private boolean isMigration = false;
     private volatile BottomSortValuesCollector bottomSortCollector;
 
-    SearchQueryThenFetchAsyncAction(
+    public SearchQueryThenFetchAsyncAction(
         final Logger logger,
         final SearchTransportService searchTransportService,
         final BiFunction<String, String, Transport.Connection> nodeIdToConnection,
@@ -120,6 +121,10 @@ class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPh
         );
     }
 
+    public void setMigration(boolean isMigration) {
+        this.isMigration = isMigration;
+    }
+
     protected void executePhaseOnShard(
         final SearchShardIterator shardIt,
         final SearchShardTarget shard,
@@ -130,6 +135,7 @@ class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPh
         if (request != null) {
             request.setInboundNetworkTime(System.currentTimeMillis());
         }
+        getLogger().info("Sending Request to Node " + shard.getNodeId() + " For Shard " + shard.getShardId());
         getSearchTransport().sendExecuteQuery(getConnection(shard.getClusterAlias(), shard.getNodeId()), request, getTask(), listener);
     }
 
@@ -161,7 +167,7 @@ class SearchQueryThenFetchAsyncAction extends AbstractSearchAsyncAction<SearchPh
 
     @Override
     protected SearchPhase getNextPhase(final SearchPhaseResults<SearchPhaseResult> results, SearchPhaseContext context) {
-        return new FetchSearchPhase(results, searchPhaseController, null, this);
+        return new FetchSearchPhase(results, searchPhaseController, null, this, isMigration);
     }
 
     private ShardSearchRequest rewriteShardSearchRequest(ShardSearchRequest request) {

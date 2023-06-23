@@ -241,6 +241,8 @@ import org.opensearch.action.get.TransportMultiGetAction;
 import org.opensearch.action.get.TransportShardMultiGetAction;
 import org.opensearch.action.index.IndexAction;
 import org.opensearch.action.index.TransportIndexAction;
+import org.opensearch.action.indexstore.IndexStoreAction;
+import org.opensearch.action.indexstore.TransportIndexStoreAction;
 import org.opensearch.action.ingest.DeletePipelineAction;
 import org.opensearch.action.ingest.DeletePipelineTransportAction;
 import org.opensearch.action.ingest.GetPipelineAction;
@@ -437,6 +439,7 @@ import org.opensearch.rest.action.document.RestMultiGetAction;
 import org.opensearch.rest.action.document.RestMultiTermVectorsAction;
 import org.opensearch.rest.action.document.RestTermVectorsAction;
 import org.opensearch.rest.action.document.RestUpdateAction;
+import org.opensearch.rest.action.document.store.RestIndexStoreAction;
 import org.opensearch.rest.action.ingest.RestDeletePipelineAction;
 import org.opensearch.rest.action.ingest.RestGetPipelineAction;
 import org.opensearch.rest.action.ingest.RestPutPipelineAction;
@@ -751,10 +754,12 @@ public class ActionModule extends AbstractModule {
         actions.register(GetDecommissionStateAction.INSTANCE, TransportGetDecommissionStateAction.class);
         actions.register(DeleteDecommissionStateAction.INSTANCE, TransportDeleteDecommissionStateAction.class);
 
+
         // Search Pipelines
         actions.register(PutSearchPipelineAction.INSTANCE, PutSearchPipelineTransportAction.class);
         actions.register(GetSearchPipelineAction.INSTANCE, GetSearchPipelineTransportAction.class);
         actions.register(DeleteSearchPipelineAction.INSTANCE, DeleteSearchPipelineTransportAction.class);
+        actions.register(IndexStoreAction.INSTANCE, TransportIndexStoreAction.class);
 
         return unmodifiableMap(actions.getRegistry());
     }
@@ -963,6 +968,8 @@ public class ActionModule extends AbstractModule {
         registerHandler.accept(new RestCatAction(catActions));
         registerHandler.accept(new RestDecommissionAction());
         registerHandler.accept(new RestGetDecommissionStateAction());
+
+        registerHandler.accept(new RestIndexStoreAction());
 
         // Remote Store APIs
         if (FeatureFlags.isEnabled(FeatureFlags.REMOTE_STORE)) {

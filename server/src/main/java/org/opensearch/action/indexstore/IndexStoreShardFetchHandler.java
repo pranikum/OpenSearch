@@ -12,6 +12,7 @@ import org.opensearch.action.indexstore.integration.migrator.IMigrator;
 import org.opensearch.action.indexstore.integration.migrator.redshift.RedshiftMigrator;
 import org.opensearch.action.indexstore.integration.migrator.s3.S3Migrator;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.SearchShardTarget;
 
 public class IndexStoreShardFetchHandler {
 
@@ -19,10 +20,13 @@ public class IndexStoreShardFetchHandler {
     private String storeType;
     private String format;
 
-    public IndexStoreShardFetchHandler(String index, String storeType, String format) {
+    private SearchShardTarget shardTarget;
+
+    public IndexStoreShardFetchHandler(String index, String storeType, String format, SearchShardTarget shardTarget) {
         this.index = index;
         this.storeType = storeType;
         this.format = format;
+        this.shardTarget = shardTarget;
     }
 
     public void handleShard(SearchHit[] hits) {
@@ -35,7 +39,7 @@ public class IndexStoreShardFetchHandler {
     private IMigrator getStoreMigrator() {
         IMigrator migrator = null;
         if("s3".equalsIgnoreCase(this.storeType)) {
-            migrator = new S3Migrator(this.format);
+            migrator = new S3Migrator(this.format, this.index, this.shardTarget);
         } else if("Redshift".equalsIgnoreCase(this.storeType)) {
             migrator = new RedshiftMigrator(this.index);
         }

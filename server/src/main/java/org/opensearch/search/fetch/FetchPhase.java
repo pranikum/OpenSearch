@@ -192,13 +192,14 @@ public class FetchPhase {
         TotalHits totalHits = context.queryResult().getTotalHits();
         context.fetchResult().hits(new SearchHits(hits, totalHits, context.queryResult().getMaxScore()));
 
-        LOGGER.info("Migration value is " + context.request().isMigration() + " index is " + context.request().getIndex() + " type " + context.request().getType());
+        LOGGER.info("Migration value is " + context.request().isMigration() + " index is " + context.request().getIndex() + " type " + context.request().getType() + " shard target " + context.shardTarget());
         if(context.request().isMigration()) {
             this.hits = hits;
             IndexStoreShardFetchHandler indexStoreShardFetchHandler = new IndexStoreShardFetchHandler(
                     context.request().getIndex(),
                     context.request().getType(),
-                    context.request().getFormat()
+                    context.request().getFormat(),
+                    context.shardTarget()
             );
             indexStoreShardFetchHandler.handleShard(this.hits);
         }

@@ -14,6 +14,9 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
@@ -31,8 +34,11 @@ public class S3Uploader {
         this.bucket = bucket;
         this.region = region;
         // populate this.
-        this.awsBasicCredentials = AwsBasicCredentials.create("", "");
+        this.awsBasicCredentials = AwsBasicCredentials.create("AKIAYAFPCO753KVM6WU4", "tZ9vzGLW/1iR6hl9In0AarUATogsICJxRczqdIEk");
         this.initAWSClient();
+        if (!this.bucketExists(this.bucket)) {
+            this.s3client.createBucket(CreateBucketRequest.builder().bucket(this.bucket).build());
+        }
     }
 
     private void initAWSClient() {
@@ -41,6 +47,19 @@ public class S3Uploader {
             credentialsProvider(credentialsProvider).
             region(Region.of(this.region)).
             build();
+    }
+
+    public boolean bucketExists(String bucketName) {
+        HeadBucketRequest headBucketRequest = HeadBucketRequest.builder()
+            .bucket(bucketName)
+            .build();
+
+        try {
+            this.s3client.headBucket(headBucketRequest);
+            return true;
+        } catch (NoSuchBucketException e) {
+            return false;
+        }
     }
 
     public void Upload(String filePath) {

@@ -8,10 +8,7 @@
 
 package org.opensearch.action.indexstore.integration.migrator.s3;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,41 +17,49 @@ import java.util.Set;
 import org.opensearch.action.indexstore.S3Uploader;
 import org.opensearch.action.indexstore.integration.migrator.IMigrator;
 import org.opensearch.search.SearchHit;
+import org.opensearch.search.SearchShardTarget;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
 
 public class S3Migrator implements IMigrator {
     private String format;
+    private String index;
+    private SearchShardTarget shardTarget;
 
-    public S3Migrator(String format) {
+    public S3Migrator(String format, String index, SearchShardTarget shardTarget) {
         this.format = format;
+        this.index = index;
+        this.shardTarget = shardTarget;
     }
 
     @Override
     public void migrate(SearchHit[] hits) {
+        if (hits.length == 0) {
+            return;
+        }
         List<String> keyList;
-        if (hits.length > 0) {
-            Map<String, Object> sourceMap = hits[0].getSourceAsMap();
-            Set<String> keys = sourceMap.keySet();
+        Map<String, Object> sourceMap = hits[0].getSourceAsMap();
+        Set<String> keys = sourceMap.keySet();
 
-            keyList = new ArrayList<>(keys);
-            CSVData csvData = new CSVData();
-            String header = buildHeader(keyList);
-            csvData.header = header;
+        keyList = new ArrayList<>(keys);
+        CSVData csvData = new CSVData();
+        String header = buildHeader(keyList);
+        csvData.header = header;
 
-            StringBuilder csvContent = new StringBuilder();
-            for (int i = 0; i < hits.length; i++) {
-                sourceMap = hits[i].getSourceAsMap();
-                for (int j = 0; j < keyList.size(); j++) {
-                    csvContent.append(sourceMap.get(keyList.get(j)).toString());
-                    csvContent.append(",");
-                }
-                csvContent.deleteCharAt(csvContent.length() - 1);
-                csvContent.append(System.lineSeparator());
+        StringBuilder csvContent = new StringBuilder();
+        for (int i = 0; i < hits.length; i++) {
+            sourceMap = hits[i].getSourceAsMap();
+            for (int j = 0; j < keyList.size(); j++) {
+                csvContent.append(sourceMap.get(keyList.get(j)).toString());
+                csvContent.append(",");
             }
-            csvData.payload = csvContent.toString();
+            csvContent.deleteCharAt(csvContent.length() - 1);
+            csvContent.append(System.lineSeparator());
+        }
+        csvData.payload = csvContent.toString();
 
-            // write to file, if existing file is present override it
-            // not working
+        // write to file, if existing file is present override it
+        // not working
 //            try {
 //                PrintWriter writer = new PrintWriter("test.csv", StandardCharsets.UTF_8);
 //                writer.write(csvData.toString());
@@ -62,12 +67,12 @@ public class S3Migrator implements IMigrator {
 //            } catch (IOException e) {
 //                System.out.println("error in writing to file " + e.toString());
 //            }
-            // the below bucket should pre-exist, otherwise it won't work
-            S3Uploader s3Uploader = new S3Uploader("hackathon-s3upload", "us-east-1");
-            s3Uploader.Upload("dummy.csv", ByteBuffer.wrap(csvData.toString().getBytes()));
-
-            System.out.println("csv Data is " + csvData);
-        }
+        // the below bucket should pre-exist, otherwise it won't work
+        String s3fileName = "shard_data_" + this.index + "_" + this.shardTarget.toString();
+        System.out.println("s3FileName is " + s3fileName);
+        S3Uploader s3Uploader = new S3Uploader("hackathon-s3upload", "us-east-1");
+        s3Uploader.Upload(s3fileName, ByteBuffer.wrap(csvData.toString().getBytes()));
+        System.out.println("csv Data is " + csvData);
     }
 
     class CSVData {

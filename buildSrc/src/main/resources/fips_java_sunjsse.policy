@@ -26,4 +26,5 @@ grant {
           permission java.lang.RuntimePermission "accessClassInPackage.sun.security.internal.spec";
           //java.security.InvalidAlgorithmParameterException: Cannot process GCMParameterSpec
           permission java.lang.RuntimePermission "accessDeclaredMembers";
+          permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 };

@@ -106,9 +106,9 @@ tasks.register("writeTestJavaPolicy") {
           "  permission java.util.PropertyPermission \"intellij.debug.agent\", \"write\";",
           "  permission org.bouncycastle.crypto.CryptoServicesPermission \"exportSecretKey\";",
           "  permission org.bouncycastle.crypto.CryptoServicesPermission \"exportPrivateKey\";",
-          "  permission java.io.FilePermission \"\${javax.net.ssl.trustStore}\", \"read\";",
+          "  permission java.io.FilePermission \"<<ALL FILES>>\", \"read,write\";",
           "  permission java.util.PropertyPermission \"aws.ec2MetadataServiceEndpoint\", \"write\";",
-          "  permission java.io.FilePermission \"config\", \"read\";",
+          "  permission java.io.FilePermission \"<<ALL FILES>>\", \"read,write\";",
           "};"
         ].join("\n")
       )
@@ -117,7 +117,7 @@ tasks.register("writeTestJavaPolicy") {
         [
           "grant {",
           "  permission java.util.PropertyPermission \"aws.ec2MetadataServiceEndpoint\", \"write\";",
-          "  permission java.io.FilePermission \"config\", \"read\";",
+          "  permission java.io.FilePermission \"<<ALL FILES>>\", \"read,write\";",
           "};"
         ].join("\n"))
     }

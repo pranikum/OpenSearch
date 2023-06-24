@@ -25,5 +25,5 @@ grant {
      permission java.util.PropertyPermission "intellij.debug.agent", "write";
      permission org.bouncycastle.crypto.CryptoServicesPermission "exportSecretKey";
      permission org.bouncycastle.crypto.CryptoServicesPermission "exportPrivateKey";
-     permission java.io.FilePermission "${javax.net.ssl.trustStore}", "read";
+     permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 };

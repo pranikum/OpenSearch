@@ -8,25 +8,31 @@
 
 package org.opensearch.action.indexstore.integration.migrator.s3;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.opensearch.action.indexstore.S3Uploader;
 import org.opensearch.action.indexstore.integration.migrator.IMigrator;
 import org.opensearch.search.SearchHit;
 
 
 public class S3Migrator implements IMigrator {
     private String format;
+
     public S3Migrator(String format) {
         this.format = format;
     }
-    
+
     @Override
     public void migrate(SearchHit[] hits) {
         List<String> keyList;
-        if(hits.length > 0) {
+        if (hits.length > 0) {
             Map<String, Object> sourceMap = hits[0].getSourceAsMap();
             Set<String> keys = sourceMap.keySet();
 
@@ -36,18 +42,31 @@ public class S3Migrator implements IMigrator {
             csvData.header = header;
 
             StringBuilder csvContent = new StringBuilder();
-            for(int i=0; i<hits.length; i++) {
+            for (int i = 0; i < hits.length; i++) {
                 sourceMap = hits[i].getSourceAsMap();
-                for(int j=0; j < keyList.size(); j++) {
+                for (int j = 0; j < keyList.size(); j++) {
                     csvContent.append(sourceMap.get(keyList.get(j)).toString());
                     csvContent.append(",");
                 }
-                csvContent.deleteCharAt(csvContent.length()-1);
+                csvContent.deleteCharAt(csvContent.length() - 1);
                 csvContent.append(System.lineSeparator());
             }
             csvData.payload = csvContent.toString();
 
-            System.out.println(csvData);
+            // write to file, if existing file is present override it
+            // not working
+//            try {
+//                PrintWriter writer = new PrintWriter("test.csv", StandardCharsets.UTF_8);
+//                writer.write(csvData.toString());
+//                writer.close();
+//            } catch (IOException e) {
+//                System.out.println("error in writing to file " + e.toString());
+//            }
+            // the below bucket should pre-exist, otherwise it won't work
+            S3Uploader s3Uploader = new S3Uploader("hackathon-s3upload", "us-east-1");
+            s3Uploader.Upload("dummy.csv", ByteBuffer.wrap(csvData.toString().getBytes()));
+
+            System.out.println("csv Data is " + csvData);
         }
     }
 
@@ -65,13 +84,13 @@ public class S3Migrator implements IMigrator {
         String header = "";
         System.out.println("keyList = " + keyList);
         StringBuilder builder = new StringBuilder();
-        if(keyList != null && keyList.size() > 0) {
+        if (keyList != null && keyList.size() > 0) {
 
             for (String key : keyList) {
                 builder.append(key);
                 builder.append(",");
             }
-            builder.deleteCharAt(builder.length()-1);
+            builder.deleteCharAt(builder.length() - 1);
             builder.append(System.lineSeparator());
 
         }

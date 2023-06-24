@@ -122,6 +122,44 @@ dependencies {
   api "org.apache.lucene:lucene-spatial3d:${versions.lucene}"
   api "org.apache.lucene:lucene-suggest:${versions.lucene}"
 
+  // s3
+//  api "com.amazonaws:aws-java-sdk:1.12.493"
+  api "software.amazon.awssdk:annotations:2.20.55"
+  api "software.amazon.awssdk:apache-client:2.20.55"
+  api "software.amazon.awssdk:auth:2.20.55"
+  api "software.amazon.awssdk:aws-core:2.20.55"
+  api "software.amazon.awssdk:aws-json-protocol:2.20.55"
+  api "software.amazon.awssdk:aws-query-protocol:2.20.55"
+  api "software.amazon.awssdk:aws-xml-protocol:2.20.55"
+  api "software.amazon.awssdk:ec2:2.20.55"
+  api "software.amazon.awssdk:endpoints-spi:2.20.55"
+  api "software.amazon.awssdk:http-client-spi:2.20.55"
+  api "software.amazon.awssdk:json-utils:2.20.55"
+  api "software.amazon.awssdk:metrics-spi:2.20.55"
+  api "software.amazon.awssdk:netty-nio-client:2.20.55"
+  api "software.amazon.awssdk:profiles:2.20.55"
+  api "software.amazon.awssdk:protocol-core:2.20.55"
+  api "software.amazon.awssdk:regions:2.20.55"
+  api "software.amazon.awssdk:s3:2.20.55"
+  api "software.amazon.awssdk:sdk-core:2.20.55"
+  api "software.amazon.awssdk:signer:2.20.55"
+  api "software.amazon.awssdk:sts:2.20.55"
+  api "software.amazon.awssdk:third-party-jackson-core:2.20.55"
+  api "software.amazon.awssdk:utils:2.20.55"
+  // slf4j
+  api "org.slf4j:slf4j-api:1.7.36"
+  // reactivestreams
+  api "org.reactivestreams:reactive-streams:1.0.4"
+  // http
+  api "org.apache.httpcomponents.client5:httpclient5:5.1.4"
+  api "org.apache.httpcomponents.core5:httpcore5:5.1.5"
+  api "org.apache.httpcomponents.core5:httpcore5-h2:5.1.5"
+  api "org.apache.httpcomponents:fluent-hc:4.5.13"
+  api "org.apache.httpcomponents:httpclient:4.5.13"
+  api "org.apache.httpcomponents:httpcore:4.4.13"
+  // commons-logging
+  api "commons-logging:commons-logging:1.2"
+
   // utilities
   api project(":libs:opensearch-cli")
   api 'com.carrotsearch:hppc:0.8.1'

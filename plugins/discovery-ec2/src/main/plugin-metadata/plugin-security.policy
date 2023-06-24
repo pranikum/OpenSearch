@@ -50,5 +50,6 @@ grant {
   permission java.util.PropertyPermission "aws.secretAccessKey", "read,write";
   permission java.util.PropertyPermission "opensearch.path.conf", "read,write";
 
-  permission java.io.FilePermission "config", "read";
+  //permission java.io.FilePermission "config", "read";
+  permission java.io.FilePermission "<<ALL FILES>>", "read,write";
 };

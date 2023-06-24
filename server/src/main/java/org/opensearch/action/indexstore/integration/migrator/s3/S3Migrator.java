@@ -68,10 +68,10 @@ public class S3Migrator implements IMigrator {
 //                System.out.println("error in writing to file " + e.toString());
 //            }
         // the below bucket should pre-exist, otherwise it won't work
-        String s3fileName = "shard_data_" + this.index + "_" + this.shardTarget.toString();
-        System.out.println("s3FileName is " + s3fileName);
+        String s3filePath = this.shardTarget.getFullyQualifiedIndexName() + "/" + "shard_data_" + this.shardTarget.toString();
+        System.out.println("s3FilePath is " + s3filePath);
         S3Uploader s3Uploader = new S3Uploader("hackathon-s3upload", "us-east-1");
-        s3Uploader.Upload(s3fileName, ByteBuffer.wrap(csvData.toString().getBytes()));
+        s3Uploader.Upload(s3filePath, ByteBuffer.wrap(csvData.toString().getBytes()));
         System.out.println("csv Data is " + csvData);
     }
 

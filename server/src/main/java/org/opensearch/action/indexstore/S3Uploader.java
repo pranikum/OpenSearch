@@ -33,8 +33,8 @@ public class S3Uploader {
     public S3Uploader(String bucket, String region) {
         this.bucket = bucket;
         this.region = region;
-        // populate this.
-        this.awsBasicCredentials = AwsBasicCredentials.create("AKIAYAFPCO753KVM6WU4", "tZ9vzGLW/1iR6hl9In0AarUATogsICJxRczqdIEk");
+        // populate the below and give the user access to s3
+        this.awsBasicCredentials = AwsBasicCredentials.create("", "");
         this.initAWSClient();
         if (!this.bucketExists(this.bucket)) {
             this.s3client.createBucket(CreateBucketRequest.builder().bucket(this.bucket).build());

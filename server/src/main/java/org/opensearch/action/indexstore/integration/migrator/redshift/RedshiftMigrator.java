@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class RedshiftMigrator implements IMigrator {
-
     private final String indexName;
 
     public RedshiftMigrator(String indexName) {
@@ -29,9 +28,8 @@ public class RedshiftMigrator implements IMigrator {
 
     @Override
     public void migrate(SearchHit[] hits) {
-        List<String> keyList;
         List<String> fields = null;
-        List<Map<String, Object>> dataMap = null;
+        List<Map<String, Object>> dataMap = new ArrayList<>();
         if(hits.length > 0) {
             Map<String, Object> sourceMap = hits[0].getSourceAsMap();
             Set<String> keys = sourceMap.keySet();
@@ -42,7 +40,9 @@ public class RedshiftMigrator implements IMigrator {
             }
         }
         try {
-            migrateDataToRedshift(fields, dataMap);
+            if(dataMap.size() > 0) {
+                migrateDataToRedshift(fields, dataMap);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -54,24 +54,17 @@ public class RedshiftMigrator implements IMigrator {
         try {
             RedshiftConnector connector = new RedshiftConnector();
             connection = connector.getConnection();
+            if(connection == null) {
+                System.out.println("Connection could not be established ");
+                return;
+            }
             connector.createTable(connection, indexName, fields);
             connector.insertData(connection, indexName, fields, sourceMap);
+
         } finally {
             if(connection != null) {
                 connection.close();
             }
-        }
-    }
-
-    public static void main(String[] args) {
-        RedshiftMigrator migrator = new RedshiftMigrator("index");
-        List<String> cols = List.of("Name", "email", "phone", "Id");
-        List<Map<String, Object>> datamap = new ArrayList<>();
-
-        for(int i=0; i<5; i++) {
-            Map<String, Object> rowMap = new HashMap<>();
-            rowMap.put("Name", "test" + i);
-            rowMap.put("email", "test" + i + "@gmail.com");
         }
     }
 }

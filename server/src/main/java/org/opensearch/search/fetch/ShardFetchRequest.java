@@ -121,9 +121,15 @@ public class ShardFetchRequest extends TransportRequest {
         }
         out.writeBoolean(isMigration);
 
+        if(index != null) {
             out.writeString(index);
+        }
+        if(type != null) {
             out.writeString(type);
+        }
+        if(format != null) {
             out.writeString(format);
+        }
 
     }
 
@@ -157,7 +163,7 @@ public class ShardFetchRequest extends TransportRequest {
     }
 
     public void setIndex(String index) {
-        this.index = index;
+        this.index = index == null ? "": index;
     }
 
     public String getType() {
@@ -165,7 +171,7 @@ public class ShardFetchRequest extends TransportRequest {
     }
 
     public void setType(String type) {
-        this.type = type;
+        this.type = type == null ? "":type;
     }
 
     public String getFormat() {
@@ -173,7 +179,7 @@ public class ShardFetchRequest extends TransportRequest {
     }
 
     public void setFormat(String format) {
-        this.format = format;
+        this.format = format == null ? "": format;
     }
 
     @Override

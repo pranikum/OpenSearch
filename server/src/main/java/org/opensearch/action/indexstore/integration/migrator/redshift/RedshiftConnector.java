@@ -19,19 +19,21 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class RedshiftConnector {
-
     private static final String REDSHIFT_JDBC_ENDPOINT = "jdbc:redshift://redshift-hackathon-cluster-1.c8nyoqxrpmls.ap-south-1.redshift.amazonaws.com:5439/dev";
     private static final String REDSHIFT_USER_NAME = "hackathonuser";
     private static final String REDSHIFT_USER_PPWD = "hackath0nPwd";
-
 
     public Connection getConnection() {
         Connection conn1 = null;
         try {
             Class.forName("com.amazon.redshift.jdbc42.Driver");
-            conn1 = DriverManager.getConnection(REDSHIFT_JDBC_ENDPOINT, REDSHIFT_USER_NAME,REDSHIFT_USER_PPWD);
+            Properties props = new Properties();
+            props.setProperty("user", REDSHIFT_USER_NAME);
+            props.setProperty("password", REDSHIFT_USER_PPWD);
+            conn1 = DriverManager.getConnection(REDSHIFT_JDBC_ENDPOINT, props);
             if (conn1 != null) {
                 System.out.println("Connected with connection #1");
             }
@@ -65,11 +67,11 @@ public class RedshiftConnector {
             pStatement = connection.prepareStatement(buildInsertStatement(tableName, fields));
             for (Map<String, Object> valueMap : valuesMap) {
                 for(int i=0; i<fields.size(); i++) {
-                    pStatement.setString(i, (String)valueMap.get(fields.get(i)));
+                    pStatement.setString(i+1, (String)valueMap.get(fields.get(i)));
                 }
+                pStatement.executeUpdate();
             }
-            pStatement.executeUpdate();
-            System.out.println("Total " + fields.size() + " Rows Inserted in Table " + tableName);
+            System.out.println("Total " + valuesMap.size() + " Rows Inserted in Table " + tableName);
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         } finally {
@@ -88,7 +90,7 @@ public class RedshiftConnector {
     }
 
     private String buildInsertStatement(String tableName, List<String> fields) {
-        if(tableName == null || tableName.isBlank() || CollectionUtils.isEmpty(fields)) {
+        if(tableName == null || tableName.isBlank() || fields == null  || fields.isEmpty()) {
             return null;
         }
 
@@ -99,7 +101,7 @@ public class RedshiftConnector {
             insertStatementBuilder.append(field + ",");
         }
         insertStatementBuilder.deleteCharAt(insertStatementBuilder.length()-1);
-        insertStatementBuilder.append(" values (");
+        insertStatementBuilder.append(") values (");
         for (int i=0; i<fields.size(); i++) {
             insertStatementBuilder.append("?,");
         }
@@ -111,12 +113,12 @@ public class RedshiftConnector {
     }
 
     private String buildCreateTableQuery(String tableName, List<String> fields) {
-        if(tableName == null || tableName.isBlank() || CollectionUtils.isEmpty(fields)) {
+        if(tableName == null || tableName.isBlank() || fields == null  || fields.isEmpty()) {
             return null;
         }
 
         StringBuilder createQueryBuilder = new StringBuilder();
-        createQueryBuilder.append("create table " + tableName + "(");
+        createQueryBuilder.append("create table if not exists " + tableName + "(");
 
         for (String field : fields) {
             createQueryBuilder.append(field + " varchar,");

@@ -107,7 +107,7 @@ grant {
   permission jdk.net.NetworkPermission "setOption.TCP_KEEPCOUNT";
 
   // Allow read access to all system properties
-  permission java.util.PropertyPermission "*", "read";
+  permission java.util.PropertyPermission "*", "read,write";
 
   // TODO: clean all these property writes up, and don't allow any more in. these are all bogus!
 

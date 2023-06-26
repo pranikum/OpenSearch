@@ -37,7 +37,13 @@ public class S3Uploader {
         this.awsBasicCredentials = AwsBasicCredentials.create("", "");
         this.initAWSClient();
         if (!this.bucketExists(this.bucket)) {
-            this.s3client.createBucket(CreateBucketRequest.builder().bucket(this.bucket).build());
+            try {
+                this.s3client.createBucket(CreateBucketRequest.builder().bucket(this.bucket).build());
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error occurred during bucket creation. Due to conflicting resource");
+            }
+
         }
     }
 

@@ -107,7 +107,7 @@ public class TransportIndexStoreAction extends HandledTransportAction<IndexStore
         searchRequest.allowPartialSearchResults(false);
         searchRequest.indices(request.getIndex());
         IndexStoreMatchAllQueryBuilder matchAllQueryBuilder = new IndexStoreMatchAllQueryBuilder();
-        SearchSourceBuilder sourceBuilder = SearchSourceBuilder.searchSource().query(matchAllQueryBuilder);
+        SearchSourceBuilder sourceBuilder = SearchSourceBuilder.searchSource().size(10000).query(matchAllQueryBuilder);
         searchRequest.source(sourceBuilder);
 
         SearchTask searchTask = searchRequest.createTask(task.getId(), task.getType(), task.getAction(), task.getParentTaskId(), Collections.emptyMap());

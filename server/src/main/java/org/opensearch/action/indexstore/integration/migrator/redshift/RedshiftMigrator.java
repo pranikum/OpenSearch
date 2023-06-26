@@ -58,7 +58,7 @@ public class RedshiftMigrator implements IMigrator {
                 System.out.println("Connection could not be established ");
                 return;
             }
-            connector.createTable(connection, indexName, fields);
+            connector.createTable(connection, indexName, fields, sourceMap.get(0));
             connector.insertData(connection, indexName, fields, sourceMap);
 
         } finally {

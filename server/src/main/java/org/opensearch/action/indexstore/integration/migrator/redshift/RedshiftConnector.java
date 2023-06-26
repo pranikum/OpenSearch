@@ -26,7 +26,7 @@ import java.util.Properties;
 public class RedshiftConnector {
     private static final String REDSHIFT_JDBC_ENDPOINT = "jdbc:redshift://redshift-hackathon-cluster-1.c8nyoqxrpmls.ap-south-1.redshift.amazonaws.com:5439/dev";
     private static final String REDSHIFT_USER_NAME = "hackathonuser";
-    private static final String REDSHIFT_USER_PPWD = "hackath0nPwd";
+    private static final String REDSHIFT_USER_PPWD = "";
 
     public Connection getConnection() {
         Connection conn1 = null;

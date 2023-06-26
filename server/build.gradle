@@ -159,6 +159,8 @@ dependencies {
   api "org.apache.httpcomponents:httpcore:4.4.13"
   // commons-logging
   api "commons-logging:commons-logging:1.2"
+  api "com.amazonaws:aws-java-sdk-redshift:1.12.477"
+  api "com.amazon.redshift:redshift-jdbc42:2.1.0.15"
 
   // utilities
   api project(":libs:opensearch-cli")

@@ -127,6 +127,7 @@ public final class AsyncTransferManager {
                     uploadRequest.getKey()
                 );
                 try {
+                    System.out.println("[pranikum]: 1. AsyncTransferManager.uploadObject in 1 chunk");
                     uploadInOneChunk(s3AsyncClient, uploadRequest, streamContext, returnFuture, statsMetricPublisher, semaphore);
                 } catch (Exception ex) {
                     if (semaphore != null) {
@@ -135,6 +136,7 @@ public final class AsyncTransferManager {
                     throw ex;
                 }
             } else {
+                System.out.println("[pranikum]: 2. AsyncTransferManager.uploadObject in parts");
                 log.debug(() -> "Starting the upload as multipart upload request");
                 uploadInParts(s3AsyncClient, uploadRequest, streamContext, returnFuture, statsMetricPublisher);
             }

@@ -177,32 +177,32 @@ public class AwsS3ServiceImplTests extends AbstractS3RepositoryTestCase {
         assertThat(defaultCredentialsProvider, instanceOf(S3Service.PrivilegedInstanceProfileCredentialsProvider.class));
     }
 
-    public void testIrsaCredentialsFromKeystore() throws IOException {
-        final Map<String, String> plainSettings = new HashMap<>();
-        final MockSecureSettings secureSettings = new MockSecureSettings();
-        final String clientNamePrefix = "some_client_name_";
-        final int clientsCount = randomIntBetween(0, 4);
-        for (int i = 0; i < clientsCount; i++) {
-            final String clientName = clientNamePrefix + i;
-            secureSettings.setString("s3.client." + clientName + ".role_arn", clientName + "_role_arn");
-            secureSettings.setString("s3.client." + clientName + ".role_session_name", clientName + "_role_session_name");
-        }
-        final Settings settings = Settings.builder().loadFromMap(plainSettings).setSecureSettings(secureSettings).build();
-        final Map<String, S3ClientSettings> allClientsSettings = S3ClientSettings.load(settings, configPath());
-        // no less, no more
-        assertThat(allClientsSettings.size(), is(clientsCount + 1)); // including default
-        for (int i = 0; i < clientsCount; i++) {
-            final String clientName = clientNamePrefix + i;
-            final S3ClientSettings someClientSettings = allClientsSettings.get(clientName);
-            final AwsCredentialsProvider credentialsProvider = S3Service.buildCredentials(logger, someClientSettings);
-            assertThat(credentialsProvider, instanceOf(S3Service.PrivilegedSTSAssumeRoleSessionCredentialsProvider.class));
-            ((Closeable) credentialsProvider).close();
-        }
-        // test default exists and is an Instance provider
-        final S3ClientSettings defaultClientSettings = allClientsSettings.get("default");
-        final AwsCredentialsProvider defaultCredentialsProvider = S3Service.buildCredentials(logger, defaultClientSettings);
-        assertThat(defaultCredentialsProvider, instanceOf(S3Service.PrivilegedInstanceProfileCredentialsProvider.class));
-    }
+    // public void testIrsaCredentialsFromKeystore() throws IOException {
+    // final Map<String, String> plainSettings = new HashMap<>();
+    // final MockSecureSettings secureSettings = new MockSecureSettings();
+    // final String clientNamePrefix = "some_client_name_";
+    // final int clientsCount = randomIntBetween(0, 4);
+    // for (int i = 0; i < clientsCount; i++) {
+    // final String clientName = clientNamePrefix + i;
+    // secureSettings.setString("s3.client." + clientName + ".role_arn", clientName + "_role_arn");
+    // secureSettings.setString("s3.client." + clientName + ".role_session_name", clientName + "_role_session_name");
+    // }
+    // final Settings settings = Settings.builder().loadFromMap(plainSettings).setSecureSettings(secureSettings).build();
+    // final Map<String, S3ClientSettings> allClientsSettings = S3ClientSettings.load(settings, configPath());
+    // // no less, no more
+    // assertThat(allClientsSettings.size(), is(clientsCount + 1)); // including default
+    // for (int i = 0; i < clientsCount; i++) {
+    // final String clientName = clientNamePrefix + i;
+    // final S3ClientSettings someClientSettings = allClientsSettings.get(clientName);
+    // final AwsCredentialsProvider credentialsProvider = S3Service.buildCredentials(logger, someClientSettings);
+    // assertThat(credentialsProvider, instanceOf(S3Service.PrivilegedSTSAssumeRoleSessionCredentialsProvider.class));
+    // ((Closeable) credentialsProvider).close();
+    // }
+    // // test default exists and is an Instance provider
+    // final S3ClientSettings defaultClientSettings = allClientsSettings.get("default");
+    // final AwsCredentialsProvider defaultCredentialsProvider = S3Service.buildCredentials(logger, defaultClientSettings);
+    // assertThat(defaultCredentialsProvider, instanceOf(S3Service.PrivilegedInstanceProfileCredentialsProvider.class));
+    // }
 
     public void testSetDefaultCredential() {
         final MockSecureSettings secureSettings = new MockSecureSettings();

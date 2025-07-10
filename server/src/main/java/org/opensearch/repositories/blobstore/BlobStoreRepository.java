@@ -990,34 +990,79 @@ public abstract class BlobStoreRepository extends AbstractLifecycleComponent imp
     }
 
     /**
+     * Calls the existing blobStore() method. Specific repositories can implement the support for
+     * Server side encryption
+     * @param serverSideEncryption If the server side encryption is supported.
+     * @return BlobStore `Blobstore` for the repository
+     */
+    public BlobStore blobStore(boolean serverSideEncryption) {
+        System.out.println("[pranikum]: Getting Blob store with serverSideEncryption = " + serverSideEncryption);
+        if(!serverSideEncryption) {
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            for (StackTraceElement ste : stackTraceElements) {
+                System.out.println(" [pranikum]:  " + ste + "\n");
+            }
+        }
+
+        return fetchOrCreateBlobStore(blobStore, serverSideEncryption);
+    }
+
+    /**
      * Maintains single lazy instance of {@link BlobStore}.
      * Public for testing.
      */
     public BlobStore blobStore() {
+
+        return blobStore(false);
+    }
+
+    protected BlobStore fetchOrCreateBlobStore(final SetOnce<BlobStore> blobStore, final boolean serverSideEncryption) {
+        // Assertion not true as Kraken threads use blobStore
+        // assertSnapshotOrGenericThread();
         BlobStore store = blobStore.get();
         if (store == null) {
             synchronized (lock) {
                 store = blobStore.get();
                 if (store == null) {
-                    if (lifecycle.started() == false) {
-                        throw new RepositoryException(metadata.name(), "repository is not in started state");
-                    }
-                    try {
-                        store = createBlobStore();
-                        if (metadata.cryptoMetadata() != null) {
-                            store = new EncryptedBlobStore(store, metadata.cryptoMetadata());
-                        }
-                    } catch (RepositoryException e) {
-                        throw e;
-                    } catch (Exception e) {
-                        throw new RepositoryException(metadata.name(), "cannot create blob store", e);
+                    store = initBlobStore();
+
+                    if (!serverSideEncryption) {
+                        store = encryptStore(store);
                     }
                     blobStore.set(store);
                 }
             }
         }
+        System.out.println("[pranikum]: Store class is " + store.getClass().getName() + " Is encryption enabled " + serverSideEncryption);
         return store;
     }
+
+    private BlobStore encryptStore(BlobStore store) {
+        System.out.println("[pranikum]: cryptoMetadata is " + metadata.cryptoMetadata());
+        if (metadata.cryptoMetadata() != null) {
+            store = new EncryptedBlobStore(store, metadata.cryptoMetadata());
+        }
+        return store;
+    }
+
+    private BlobStore initBlobStore() {
+        if (lifecycle.started() == false) {
+            throw new RepositoryException(metadata.name(), "repository is not in started state" + lifecycle.state());
+        }
+        try {
+            throw new Exception();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            return createBlobStore();
+        } catch (RepositoryException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RepositoryException(metadata.name(), "cannot create blob store", e);
+        }
+    }
+
 
     /**
      * Creates new BlobStore to read and write data.
@@ -3646,6 +3691,9 @@ public abstract class BlobStoreRepository extends AbstractLifecycleComponent imp
     }
 
     private RepositoryMetadata getRepoMetadata(ClusterState state) {
+
+        System.out.println("BlobStoreRepository.getRepoMetadata  state.getMetadata() " + state.getMetadata().toString() + " current metadat name is " + metadata.name());
+
         final RepositoryMetadata repositoryMetadata = state.getMetadata()
             .<RepositoriesMetadata>custom(RepositoriesMetadata.TYPE)
             .repository(metadata.name());

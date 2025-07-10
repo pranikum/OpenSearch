@@ -935,6 +935,8 @@ public final class IndexSettings {
      */
     private final boolean isCompositeIndex;
 
+    private final boolean isRemoteStoreDirectorySSEnabled;
+
     /**
      * Denotes whether search via star tree index is enabled for this index
      */
@@ -1022,6 +1024,9 @@ public final class IndexSettings {
         isRemoteStoreEnabled = settings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_ENABLED, false);
 
         isWarmIndex = settings.getAsBoolean(IndexModule.IS_WARM_INDEX_SETTING.getKey(), false);
+
+        // For demo we will make index named starting with sse- enabled to sse
+        isRemoteStoreDirectorySSEnabled = index.getName().startsWith("sse1-");
 
         remoteStoreTranslogRepository = settings.get(IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY);
         remoteTranslogUploadBufferInterval = INDEX_REMOTE_TRANSLOG_BUFFER_INTERVAL_SETTING.get(settings);
@@ -1407,6 +1412,13 @@ public final class IndexSettings {
      */
     public boolean isRemoteStoreEnabled() {
         return isRemoteStoreEnabled;
+    }
+
+    /**
+     * Returns if remote store is enabled for this index.
+     */
+    public boolean isRemoteStoreDirectorySSEnabled() {
+        return isRemoteStoreDirectorySSEnabled;
     }
 
     public boolean isAssignedOnRemoteNode() {

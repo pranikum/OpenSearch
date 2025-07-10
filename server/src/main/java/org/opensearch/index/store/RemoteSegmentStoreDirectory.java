@@ -129,7 +129,8 @@ public final class RemoteSegmentStoreDirectory extends FilterDirectory implement
         RemoteDirectory remoteMetadataDirectory,
         RemoteStoreLockManager mdLockManager,
         ThreadPool threadPool,
-        ShardId shardId
+        ShardId shardId,
+        boolean serverSideEncryptionEnabled
     ) throws IOException {
         super(remoteDataDirectory);
         this.remoteDataDirectory = remoteDataDirectory;
@@ -139,6 +140,16 @@ public final class RemoteSegmentStoreDirectory extends FilterDirectory implement
         this.metadataFilePinnedTimestampMap = new HashMap<>();
         this.logger = Loggers.getLogger(getClass(), shardId);
         init();
+    }
+
+    public RemoteSegmentStoreDirectory(
+        RemoteDirectory remoteDataDirectory,
+        RemoteDirectory remoteMetadataDirectory,
+        RemoteStoreLockManager mdLockManager,
+        ThreadPool threadPool,
+        ShardId shardId
+    ) throws IOException {
+        this(remoteDataDirectory, remoteMetadataDirectory, mdLockManager, threadPool, shardId, false);
     }
 
     /**

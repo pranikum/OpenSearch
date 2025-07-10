@@ -413,7 +413,8 @@ final class StoreRecovery {
                     remoteStoreRepository,
                     indexUUID,
                     shardId,
-                    shallowCopyShardMetadata.getRemoteStorePathStrategy()
+                    shallowCopyShardMetadata.getRemoteStorePathStrategy(),
+                    indexShard.indexSettings.isRemoteStoreDirectorySSEnabled()
                 );
                 RemoteSegmentMetadata remoteSegmentMetadata = sourceRemoteDirectory.initializeToSpecificCommit(
                     primaryTerm,
@@ -494,7 +495,8 @@ final class StoreRecovery {
                         remoteSegmentStoreRepository,
                         prevIndexMetadata.getIndexUUID(),
                         shardId,
-                        remoteStorePathStrategy
+                        remoteStorePathStrategy,
+                        indexShard.indexSettings.isRemoteStoreDirectorySSEnabled()
                     );
                     RemoteSegmentMetadata remoteSegmentMetadata = sourceRemoteDirectory.initializeToSpecificTimestamp(
                         recoverySource.pinnedTimestamp()

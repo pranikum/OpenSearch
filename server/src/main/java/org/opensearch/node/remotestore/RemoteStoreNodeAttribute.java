@@ -42,7 +42,11 @@ public class RemoteStoreNodeAttribute {
     // TO-DO the string constants are used only for tests and can be moved to test package
     public static final String REMOTE_STORE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEY = "remote_store.state.repository";
     public static final String REMOTE_STORE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEY = "remote_store.segment.repository";
+    public static final String REMOTE_STORE_SEGMENT_REPOSITORY_SSE_NAME_ATTRIBUTE_KEY = "remote_store.segment-sse.repository";
+
     public static final String REMOTE_STORE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEY = "remote_store.translog.repository";
+    public static final String REMOTE_STORE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEY = "remote_store.translog-sse.repository";
+
     public static final String REMOTE_STORE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEY = "remote_store.routing_table.repository";
 
     public static final List<String> REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
@@ -52,11 +56,21 @@ public class RemoteStoreNodeAttribute {
     public static final List<String> REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
         .map(prefix -> prefix + ".routing_table.repository")
         .collect(Collectors.toList());
+
     public static final List<String> REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
         .map(prefix -> prefix + ".segment.repository")
         .collect(Collectors.toList());
+
+    public static final List<String> REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
+        .map(prefix -> prefix + ".segment-sse.repository")
+        .collect(Collectors.toList());
+
     public static final List<String> REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
         .map(prefix -> prefix + ".translog.repository")
+        .collect(Collectors.toList());
+
+    public static final List<String> REMOTE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS = REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX.stream()
+        .map(prefix -> prefix + ".translog-sse.repository")
         .collect(Collectors.toList());
 
     public static final String REMOTE_STORE_REPOSITORY_TYPE_ATTRIBUTE_KEY_FORMAT = "remote_store.repository.%s.type";
@@ -78,7 +92,9 @@ public class RemoteStoreNodeAttribute {
 
     public static List<List<String>> SUPPORTED_DATA_REPO_NAME_ATTRIBUTES = Arrays.asList(
         REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS,
-        REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS
+        REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS,
+        REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS,
+        REMOTE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS
     );
 
     /**
@@ -108,8 +124,12 @@ public class RemoteStoreNodeAttribute {
 
     private CryptoMetadata buildCryptoMetadata(DiscoveryNode node, String repositoryName, String prefix) {
         String metadataKey = String.format(Locale.getDefault(), REPOSITORY_CRYPTO_ATTRIBUTE_KEY_FORMAT, prefix, repositoryName);
+        System.out.println("metadataKey = " + metadataKey);
+
         boolean isRepoEncrypted = node.getAttributes().keySet().stream().anyMatch(key -> key.startsWith(metadataKey));
-        if (isRepoEncrypted == false) {
+        System.out.println("isRepoEncrypted = " + isRepoEncrypted);
+
+        if (!isRepoEncrypted) {
             return null;
         }
 
@@ -175,6 +195,7 @@ public class RemoteStoreNodeAttribute {
         List<RepositoryMetadata> repositoryMetadataList = new ArrayList<>();
 
         for (Map.Entry<String, String> repository : repositoryNamesWithPrefix.entrySet()) {
+            System.out.println("repository value is = " + repository.getValue());
             repositoryMetadataList.add(buildRepositoryMetadata(node, repository.getKey(), repository.getValue()));
         }
 
@@ -195,11 +216,16 @@ public class RemoteStoreNodeAttribute {
         if (containsKey(node.getAttributes(), REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS)
             || containsKey(node.getAttributes(), REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
             repositoryNames.add(validateAttributeNonNull(node, REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+            repositoryNames.add(validateAttributeNonNull(node, REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
             repositoryNames.add(validateAttributeNonNull(node, REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+            repositoryNames.add(validateAttributeNonNull(node, REMOTE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+
             repositoryNames.add(validateAttributeNonNull(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+
         } else if (containsKey(node.getAttributes(), REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
             repositoryNames.add(validateAttributeNonNull(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
         }
+
         if (containsKey(node.getAttributes(), REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
             repositoryNames.add(validateAttributeNonNull(node, REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
         }
@@ -262,12 +288,39 @@ public class RemoteStoreNodeAttribute {
         return null;
     }
 
+    public static String getRemoteStoreSegmentRepo(Settings settings, boolean sseEnabled) {
+        if (sseEnabled) {
+            for (String prefix : REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
+                if (settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix) != null) {
+                    return settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix);
+                }
+            }
+        } else {
+            return getRemoteStoreSegmentRepo(settings);
+        }
+        return null;
+    }
+
     public static String getRemoteStoreTranslogRepo(Settings settings) {
         for (String prefix : REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
             if (settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix) != null) {
                 return settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix);
             }
         }
+        return null;
+    }
+
+    public static String getRemoteStoreTranslogRepo(Settings settings, boolean sseEnabled) {
+        if (sseEnabled) {
+            for (String prefix : REMOTE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
+                if (settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix) != null) {
+                    return settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix);
+                }
+            }
+        } else {
+            return getRemoteStoreTranslogRepo(settings);
+        }
+
         return null;
     }
 
@@ -406,6 +459,7 @@ public class RemoteStoreNodeAttribute {
         if (o == null || getClass() != o.getClass()) return false;
 
         RemoteStoreNodeAttribute that = (RemoteStoreNodeAttribute) o;
+        System.out.println("[pranikum]: reposToSkip = " + reposToSkip);
         return this.getRepositoriesMetadata().equalsIgnoreGenerationsWithRepoSkip(that.getRepositoriesMetadata(), reposToSkip);
     }
 

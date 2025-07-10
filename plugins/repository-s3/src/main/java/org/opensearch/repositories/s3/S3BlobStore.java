@@ -88,6 +88,12 @@ public class S3BlobStore implements BlobStore {
     private volatile boolean permitBackedTransferEnabled;
 
     private volatile String serverSideEncryptionType;
+    private volatile boolean serverSideEncryption;
+
+    public String getServerSideEncryptionKmsKey() {
+        return serverSideEncryptionKmsKey;
+    }
+
     private volatile String serverSideEncryptionKmsKey;
     private volatile boolean serverSideEncryptionBucketKey;
     private volatile String serverSideEncryptionEncryptionContext;
@@ -133,7 +139,36 @@ public class S3BlobStore implements BlobStore {
         String serverSideEncryptionKmsKey,
         boolean serverSideEncryptionBucketKey,
         String serverSideEncryptionEncryptionContext,
-        String expectedBucketOwner
+        String expectedBucketOwner) {
+        this(service,s3AsyncService, multipartUploadEnabled, bucket, bufferSize, cannedACL, storageClass, bulkDeletesSize, repositoryMetadata,
+            asyncTransferManager, urgentExecutorBuilder, priorityExecutorBuilder, normalExecutorBuilder, normalPrioritySizeBasedBlockingQ,
+            lowPrioritySizeBasedBlockingQ, genericStatsMetricPublisher, serverSideEncryptionType, serverSideEncryptionKmsKey, serverSideEncryptionBucketKey,
+            serverSideEncryptionEncryptionContext, expectedBucketOwner, false);
+    }
+
+    S3BlobStore(
+        S3Service service,
+        S3AsyncService s3AsyncService,
+        boolean multipartUploadEnabled,
+        String bucket,
+        ByteSizeValue bufferSize,
+        String cannedACL,
+        String storageClass,
+        int bulkDeletesSize,
+        RepositoryMetadata repositoryMetadata,
+        AsyncTransferManager asyncTransferManager,
+        AsyncExecutorContainer urgentExecutorBuilder,
+        AsyncExecutorContainer priorityExecutorBuilder,
+        AsyncExecutorContainer normalExecutorBuilder,
+        SizeBasedBlockingQ normalPrioritySizeBasedBlockingQ,
+        SizeBasedBlockingQ lowPrioritySizeBasedBlockingQ,
+        GenericStatsMetricPublisher genericStatsMetricPublisher,
+        String serverSideEncryptionType,
+        String serverSideEncryptionKmsKey,
+        boolean serverSideEncryptionBucketKey,
+        String serverSideEncryptionEncryptionContext,
+        String expectedBucketOwner,
+        boolean serverSideEncryption
     ) {
         this.service = service;
         this.s3AsyncService = s3AsyncService;
@@ -155,10 +190,12 @@ public class S3BlobStore implements BlobStore {
         this.lowPrioritySizeBasedBlockingQ = lowPrioritySizeBasedBlockingQ;
         this.genericStatsMetricPublisher = genericStatsMetricPublisher;
         this.permitBackedTransferEnabled = PERMIT_BACKED_TRANSFER_ENABLED.get(repositoryMetadata.settings());
+        this.serverSideEncryption = serverSideEncryption;
         this.serverSideEncryptionType = serverSideEncryptionType;
         this.serverSideEncryptionKmsKey = serverSideEncryptionKmsKey;
         this.serverSideEncryptionBucketKey = serverSideEncryptionBucketKey;
         this.serverSideEncryptionEncryptionContext = serverSideEncryptionEncryptionContext;
+
         this.expectedBucketOwner = expectedBucketOwner;
     }
 
@@ -173,11 +210,13 @@ public class S3BlobStore implements BlobStore {
         this.redirectLargeUploads = REDIRECT_LARGE_S3_UPLOAD.get(repositoryMetadata.settings());
         this.uploadRetryEnabled = UPLOAD_RETRY_ENABLED.get(repositoryMetadata.settings());
         this.permitBackedTransferEnabled = PERMIT_BACKED_TRANSFER_ENABLED.get(repositoryMetadata.settings());
-        this.serverSideEncryptionType = SERVER_SIDE_ENCRYPTION_TYPE_SETTING.get(repositoryMetadata.settings());
-        this.serverSideEncryptionKmsKey = SERVER_SIDE_ENCRYPTION_KMS_KEY_SETTING.get(repositoryMetadata.settings());
-        this.serverSideEncryptionBucketKey = SERVER_SIDE_ENCRYPTION_BUCKET_KEY_SETTING.get(repositoryMetadata.settings());
-        this.serverSideEncryptionEncryptionContext = SERVER_SIDE_ENCRYPTION_ENCRYPTION_CONTEXT_SETTING.get(repositoryMetadata.settings());
+//        this.serverSideEncryptionType = SERVER_SIDE_ENCRYPTION_TYPE_SETTING.get(repositoryMetadata.settings());
+//        this.serverSideEncryptionKmsKey = SERVER_SIDE_ENCRYPTION_KMS_KEY_SETTING.get(repositoryMetadata.settings());
+//        this.serverSideEncryptionBucketKey = SERVER_SIDE_ENCRYPTION_BUCKET_KEY_SETTING.get(repositoryMetadata.settings());
+//        this.serverSideEncryptionEncryptionContext = SERVER_SIDE_ENCRYPTION_ENCRYPTION_CONTEXT_SETTING.get(repositoryMetadata.settings());
         this.expectedBucketOwner = EXPECTED_BUCKET_OWNER_SETTING.get(repositoryMetadata.settings());
+
+        System.out.println("S3BlobStore.reload" + this.serverSideEncryptionType);
     }
 
     @Override

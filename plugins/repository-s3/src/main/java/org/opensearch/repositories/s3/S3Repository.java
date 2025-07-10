@@ -32,6 +32,7 @@
 
 package org.opensearch.repositories.s3;
 
+import org.opensearch.common.SetOnce;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.ServerSideEncryption;
 import software.amazon.awssdk.services.s3.model.StorageClass;
@@ -133,6 +134,7 @@ class S3Repository extends MeteredBlobStoreRepository {
         "server_side_encryption_type",
         BUCKET_DEFAULT_ENCRYPTION_TYPE,
         value -> {
+            System.out.println("S3Repository.SERVER_SIDE_ENCRYPTION_TYPE_SETTING" + value);
             if (!(value.equals(ServerSideEncryption.AES256.toString())
                 || value.equals(ServerSideEncryption.AWS_KMS.toString())
                 || value.equals(BUCKET_DEFAULT_ENCRYPTION_TYPE))) {
@@ -161,6 +163,8 @@ class S3Repository extends MeteredBlobStoreRepository {
     static final Setting<String> SERVER_SIDE_ENCRYPTION_ENCRYPTION_CONTEXT_SETTING = Setting.simpleString(
         "server_side_encryption_encryption_context"
     );
+
+    static final Setting<Boolean> SERVER_SIDE_ENCRYPTION_SETTING = Setting.boolSetting("server_side_encryption", false);
 
     /**
      * Optional setting to specify the expected S3 bucket owner. This is used to verify S3 bucket ownership before reading/writing data from/to a bucket.
@@ -326,6 +330,8 @@ class S3Repository extends MeteredBlobStoreRepository {
 
     private volatile BlobPath basePath;
 
+    private volatile boolean serverSideEncryption;
+
     private volatile String serverSideEncryptionType;
     private volatile String serverSideEncryptionKmsKey;
     private volatile boolean serverSideEncryptionBucketKey;
@@ -345,6 +351,8 @@ class S3Repository extends MeteredBlobStoreRepository {
     private final SizeBasedBlockingQ normalPrioritySizeBasedBlockingQ;
     private final SizeBasedBlockingQ lowPrioritySizeBasedBlockingQ;
     private final GenericStatsMetricPublisher genericStatsMetricPublisher;
+
+    private final SetOnce<BlobStore> sseBlobStore = new SetOnce<>();
 
     private volatile int bulkDeletesSize;
 
@@ -419,6 +427,7 @@ class S3Repository extends MeteredBlobStoreRepository {
 
         validateRepositoryMetadata(metadata);
         readRepositoryMetadata();
+        readEncryptionSetting();
     }
 
     private static Map<String, String> buildLocation(RepositoryMetadata metadata) {
@@ -466,6 +475,7 @@ class S3Repository extends MeteredBlobStoreRepository {
 
     @Override
     protected S3BlobStore createBlobStore() {
+        System.out.println("S3Repository.createBlobStore with " +  serverSideEncryption + " kms type " + serverSideEncryptionType + " kms key " + serverSideEncryptionKmsKey);
         return new S3BlobStore(
             service,
             s3AsyncService,
@@ -487,7 +497,8 @@ class S3Repository extends MeteredBlobStoreRepository {
             serverSideEncryptionKmsKey,
             serverSideEncryptionBucketKey,
             serverSideEncryptionEncryptionContext,
-            expectedBucketOwner
+            expectedBucketOwner,
+            serverSideEncryption
         );
     }
 
@@ -526,6 +537,11 @@ class S3Repository extends MeteredBlobStoreRepository {
         // Reload configs for S3BlobStore
         BlobStore blobStore = getBlobStore();
         blobStore.reload(metadata);
+
+        BlobStore sseBlobStore = this.sseBlobStore.get();
+        if (sseBlobStore != null) {
+            sseBlobStore.reload(metadata);
+        }
     }
 
     /**
@@ -541,11 +557,6 @@ class S3Repository extends MeteredBlobStoreRepository {
         } else {
             this.basePath = BlobPath.cleanPath();
         }
-
-        this.serverSideEncryptionType = SERVER_SIDE_ENCRYPTION_TYPE_SETTING.get(metadata.settings());
-        this.serverSideEncryptionKmsKey = SERVER_SIDE_ENCRYPTION_KMS_KEY_SETTING.get(metadata.settings());
-        this.serverSideEncryptionBucketKey = SERVER_SIDE_ENCRYPTION_BUCKET_KEY_SETTING.get(metadata.settings());
-        this.serverSideEncryptionEncryptionContext = SERVER_SIDE_ENCRYPTION_ENCRYPTION_CONTEXT_SETTING.get(metadata.settings());
         this.expectedBucketOwner = EXPECTED_BUCKET_OWNER_SETTING.get(metadata.settings());
         this.storageClass = STORAGE_CLASS_SETTING.get(metadata.settings());
         this.cannedACL = CANNED_ACL_SETTING.get(metadata.settings());
@@ -573,6 +584,24 @@ class S3Repository extends MeteredBlobStoreRepository {
             serverSideEncryptionEncryptionContext,
             expectedBucketOwner
         );
+    }
+
+    public void readEncryptionSetting() {
+        try {
+            throw new Exception();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.serverSideEncryption = SERVER_SIDE_ENCRYPTION_SETTING.get(metadata.settings());
+        System.out.println("serverSideEncryption = " + serverSideEncryption);
+
+
+        this.serverSideEncryptionType = SERVER_SIDE_ENCRYPTION_TYPE_SETTING.get(metadata.settings());
+        System.out.println("S3Repository.readRepositoryMetadata " + metadata.settings().toDelimitedString('-') + " NAME is " + getMetadata().name());
+
+        this.serverSideEncryptionKmsKey = SERVER_SIDE_ENCRYPTION_KMS_KEY_SETTING.get(metadata.settings());
+        this.serverSideEncryptionBucketKey = SERVER_SIDE_ENCRYPTION_BUCKET_KEY_SETTING.get(metadata.settings());
+        this.serverSideEncryptionEncryptionContext = SERVER_SIDE_ENCRYPTION_ENCRYPTION_CONTEXT_SETTING.get(metadata.settings());
     }
 
     @Override
@@ -657,5 +686,23 @@ class S3Repository extends MeteredBlobStoreRepository {
             cancellable.cancel();
         }
         super.doClose();
+    }
+
+    public BlobStore blobStore(boolean serverSideEncryption) {
+        if (serverSideEncryption) {
+            this.serverSideEncryption = true;
+            return super.fetchOrCreateBlobStore(sseBlobStore, true);
+        } else {
+            this.serverSideEncryption = false;
+            return super.blobStore(false);
+        }
+    }
+
+    // Just for hack to initizlize early
+    public void start() {
+        super.start();
+        System.out.println("[pranikum] Initializing repository = " + this.getMetadata().name() + " SSE Blobstore");
+        this.serverSideEncryption = true;
+        super.fetchOrCreateBlobStore(sseBlobStore, true);
     }
 }

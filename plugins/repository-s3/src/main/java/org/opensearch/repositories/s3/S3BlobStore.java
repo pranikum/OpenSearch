@@ -90,10 +90,6 @@ public class S3BlobStore implements BlobStore {
     private volatile String serverSideEncryptionType;
     private volatile boolean serverSideEncryption;
 
-    public String getServerSideEncryptionKmsKey() {
-        return serverSideEncryptionKmsKey;
-    }
-
     private volatile String serverSideEncryptionKmsKey;
     private volatile boolean serverSideEncryptionBucketKey;
     private volatile String serverSideEncryptionEncryptionContext;
@@ -317,6 +313,10 @@ public class S3BlobStore implements BlobStore {
         Map<String, Long> stats = statsMetricPublisher.getStats().toMap();
         stats.putAll(genericStatsMetricPublisher.stats());
         return stats;
+    }
+
+    public String getServerSideEncryptionKmsKey() {
+        return serverSideEncryptionKmsKey;
     }
 
     @Override

@@ -385,8 +385,16 @@ public class RemoteStoreNodeAttribute {
         return getValueFromAnyKey(repos, REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS);
     }
 
+    public static String getSegmentSseRepoName(Map<String, String> repos) {
+        return getValueFromAnyKey(repos, REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS);
+    }
+
     public static String getTranslogRepoName(Map<String, String> repos) {
         return getValueFromAnyKey(repos, REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS);
+    }
+
+    public static String getTranslogSseRepoName(Map<String, String> repos) {
+        return getValueFromAnyKey(repos, REMOTE_TRANSLOG_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS);
     }
 
     private static String getValueFromAnyKey(Map<String, String> repos, List<String> keys) {

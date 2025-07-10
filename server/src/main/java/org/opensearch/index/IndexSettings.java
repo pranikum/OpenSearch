@@ -1026,9 +1026,12 @@ public final class IndexSettings {
         isWarmIndex = settings.getAsBoolean(IndexModule.IS_WARM_INDEX_SETTING.getKey(), false);
 
         // For demo we will make index named starting with sse- enabled to sse
-        isRemoteStoreDirectorySSEnabled = index.getName().startsWith("sse1-");
+        isRemoteStoreDirectorySSEnabled = index.getName().startsWith("sse-rp-");
 
         remoteStoreTranslogRepository = settings.get(IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY);
+
+
+
         remoteTranslogUploadBufferInterval = INDEX_REMOTE_TRANSLOG_BUFFER_INTERVAL_SETTING.get(settings);
         remoteStoreRepository = settings.get(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY);
         this.remoteTranslogKeepExtraGen = INDEX_REMOTE_TRANSLOG_KEEP_EXTRA_GEN_SETTING.get(settings);

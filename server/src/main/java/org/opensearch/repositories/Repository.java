@@ -611,13 +611,4 @@ public interface Repository extends LifecycleComponent {
      * Validate the repository metadata
      */
     default void validateMetadata(RepositoryMetadata repositoryMetadata) {}
-
-
-    default void setServerSideEncryption(boolean serverSideEncryption) {
-        throw new RuntimeException("Operation not supported for this repository");
-    }
-
-    default boolean isServerSideEncryption() {
-        return false;
-    }
 }

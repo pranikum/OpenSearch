@@ -8,11 +8,9 @@
 
 package org.opensearch.index.store.lockmanager;
 
-import org.opensearch.common.annotation.ExperimentalApi;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.blobstore.BlobContainer;
 import org.opensearch.common.blobstore.BlobPath;
-import org.opensearch.common.blobstore.BlobStore;
 import org.opensearch.index.remote.RemoteStorePathStrategy;
 import org.opensearch.index.store.RemoteBufferedOutputDirectory;
 import org.opensearch.repositories.RepositoriesService;
@@ -35,12 +33,6 @@ public class RemoteStoreLockManagerFactory {
     private final Supplier<RepositoriesService> repositoriesService;
     private final String segmentsPathFixedPrefix;
 
-    // Added for passing breaking change check
-    public RemoteStoreLockManagerFactory(Supplier<RepositoriesService> repositoriesService) {
-        this.repositoriesService = repositoriesService;
-        this.segmentsPathFixedPrefix = null;
-    }
-
     public RemoteStoreLockManagerFactory(Supplier<RepositoriesService> repositoriesService, String segmentsPathFixedPrefix) {
         this.repositoriesService = repositoriesService;
         this.segmentsPathFixedPrefix = segmentsPathFixedPrefix;
@@ -55,17 +47,6 @@ public class RemoteStoreLockManagerFactory {
         return newLockManager(repositoriesService.get(), repositoryName, indexUUID, shardId, pathStrategy, segmentsPathFixedPrefix);
     }
 
-    // Added for passing breaking change check
-    public static RemoteStoreMetadataLockManager newLockManager(
-        RepositoriesService repositoriesService,
-        String repositoryName,
-        String indexUUID,
-        String shardId,
-        RemoteStorePathStrategy pathStrategy
-    ) {
-        return newLockManager(repositoriesService, repositoryName, indexUUID, shardId, pathStrategy, null);
-    }
-
     public static RemoteStoreMetadataLockManager newLockManager(
         RepositoriesService repositoriesService,
         String repositoryName,
@@ -73,19 +54,6 @@ public class RemoteStoreLockManagerFactory {
         String shardId,
         RemoteStorePathStrategy pathStrategy,
         String segmentsPathFixedPrefix
-    ) {
-        return newLockManager(repositoriesService, repositoryName, indexUUID, shardId, pathStrategy, segmentsPathFixedPrefix, null);
-    }
-
-    @ExperimentalApi
-    public static RemoteStoreMetadataLockManager newLockManager(
-        RepositoriesService repositoriesService,
-        String repositoryName,
-        String indexUUID,
-        String shardId,
-        RemoteStorePathStrategy pathStrategy,
-        String segmentsPathFixedPrefix,
-        BlobStore blobStore
     ) {
         try (Repository repository = repositoriesService.repository(repositoryName)) {
             assert repository instanceof BlobStoreRepository : "repository should be instance of BlobStoreRepository";
@@ -100,11 +68,7 @@ public class RemoteStoreLockManagerFactory {
                 .fixedPrefix(segmentsPathFixedPrefix)
                 .build();
             BlobPath lockDirectoryPath = pathStrategy.generatePath(lockFilesPathInput);
-
-            if (blobStore == null) {
-                blobStore = ((BlobStoreRepository) repository).blobStore();
-            }
-            BlobContainer lockDirectoryBlobContainer = blobStore.blobContainer(lockDirectoryPath);
+            BlobContainer lockDirectoryBlobContainer = ((BlobStoreRepository) repository).blobStore().blobContainer(lockDirectoryPath);
             return new RemoteStoreMetadataLockManager(new RemoteBufferedOutputDirectory(lockDirectoryBlobContainer));
         } catch (RepositoryMissingException e) {
             throw new IllegalArgumentException("Repository should be present to acquire/release lock", e);

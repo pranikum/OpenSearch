@@ -26,8 +26,10 @@ import java.util.Objects;
 
 import static org.opensearch.cluster.metadata.IndexMetadata.REMOTE_STORE_CUSTOM_KEY;
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY;
+import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_SEGMENT_SSE_STORE_REPOSITORY;
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_STORE_ENABLED;
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY;
+import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_TRANSLOG_SSE_STORE_REPOSITORY;
 import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REPLICATION_TYPE;
 import static org.opensearch.index.remote.RemoteStoreUtils.determineRemoteStoreCustomMetadataDuringMigration;
 import static org.opensearch.index.remote.RemoteStoreUtils.getRemoteStoreRepoName;
@@ -73,8 +75,16 @@ public class RemoteMigrationIndexMetadataUpdater {
                 index
             );
             Map<String, String> remoteRepoNames = getRemoteStoreRepoName(discoveryNodes);
+            System.out.println("RemoteMigrationIndexMetadataUpdater.maybeAddRemoteIndexSettings Remote repo Names are " + remoteRepoNames);
+
             String segmentRepoName = RemoteStoreNodeAttribute.getSegmentRepoName(remoteRepoNames);
             String tlogRepoName = RemoteStoreNodeAttribute.getTranslogRepoName(remoteRepoNames);
+            if (indexMetadata.getIndex().getName().startsWith("sse-repo")) {
+                segmentRepoName = RemoteStoreNodeAttribute.getSegmentSseRepoName(remoteRepoNames);
+                tlogRepoName = RemoteStoreNodeAttribute.getTranslogSseRepoName(remoteRepoNames);
+            }
+
+            System.out.println("Index name is " + indexMetadata.getIndex().getName() + " Seg repo name " + segmentRepoName + " tlogRepoName " + tlogRepoName);
 
             assert Objects.nonNull(segmentRepoName) && Objects.nonNull(tlogRepoName) : "Remote repo names cannot be null";
             Settings.Builder indexSettingsBuilder = Settings.builder().put(currentIndexSettings);
@@ -178,6 +188,8 @@ public class RemoteMigrationIndexMetadataUpdater {
         settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true)
             .put(SETTING_REPLICATION_TYPE, ReplicationType.SEGMENT)
             .put(SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, segmentRepository)
-            .put(SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY, translogRepository);
+            .put(SETTING_REMOTE_SEGMENT_SSE_STORE_REPOSITORY, segmentRepository)
+            .put(SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY, translogRepository)
+            .put(SETTING_REMOTE_TRANSLOG_SSE_STORE_REPOSITORY, translogRepository);
     }
 }

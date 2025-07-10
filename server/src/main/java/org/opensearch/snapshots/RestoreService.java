@@ -116,15 +116,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.unmodifiableSet;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_AUTO_EXPAND_REPLICAS;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_HISTORY_UUID;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_NUMBER_OF_REPLICAS;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_NUMBER_OF_SEARCH_REPLICAS;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_STORE_ENABLED;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_REPLICATION_TYPE;
-import static org.opensearch.cluster.metadata.IndexMetadata.SETTING_VERSION_UPGRADED;
+import static org.opensearch.cluster.metadata.IndexMetadata.*;
 import static org.opensearch.cluster.service.ClusterManagerTask.RESTORE_SNAPSHOT;
 import static org.opensearch.common.util.FeatureFlags.SEARCHABLE_SNAPSHOT_EXTENDED_COMPATIBILITY;
 import static org.opensearch.common.util.IndexUtils.filterIndices;
@@ -160,7 +152,11 @@ public class RestoreService implements ClusterStateApplier {
     private static final Logger logger = LogManager.getLogger(RestoreService.class);
 
     private static final Set<String> USER_UNMODIFIABLE_SETTINGS = unmodifiableSet(
-        newHashSet(SETTING_REMOTE_STORE_ENABLED, SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY)
+        newHashSet(SETTING_REMOTE_STORE_ENABLED,
+            SETTING_REMOTE_SEGMENT_STORE_REPOSITORY,
+            SETTING_REMOTE_SEGMENT_SSE_STORE_REPOSITORY,
+            SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY,
+            SETTING_REMOTE_TRANSLOG_SSE_STORE_REPOSITORY)
     );
 
     // It's OK to change some settings, but we shouldn't allow simply removing them

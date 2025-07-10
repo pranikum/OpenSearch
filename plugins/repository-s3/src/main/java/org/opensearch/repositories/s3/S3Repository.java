@@ -688,21 +688,21 @@ class S3Repository extends MeteredBlobStoreRepository {
         super.doClose();
     }
 
-    public BlobStore blobStore(boolean serverSideEncryption) {
-        if (serverSideEncryption) {
-            this.serverSideEncryption = true;
-            return super.fetchOrCreateBlobStore(sseBlobStore, true);
-        } else {
-            this.serverSideEncryption = false;
-            return super.blobStore(false);
-        }
-    }
+//    public BlobStore blobStore(boolean serverSideEncryption) {
+//        if (serverSideEncryption) {
+//            this.serverSideEncryption = true;
+//            return super.fetchOrCreateBlobStore(sseBlobStore, true);
+//        } else {
+//            this.serverSideEncryption = false;
+//            return super.blobStore(false);
+//        }
+//    }
 
     // Just for hack to initizlize early
-    public void start() {
-        super.start();
-        System.out.println("[pranikum] Initializing repository = " + this.getMetadata().name() + " SSE Blobstore");
-        this.serverSideEncryption = true;
-        super.fetchOrCreateBlobStore(sseBlobStore, true);
-    }
+//    public void start() {
+//        super.start();
+//        System.out.println("[pranikum] Initializing repository = " + this.getMetadata().name() + " SSE Blobstore");
+//        this.serverSideEncryption = true;
+//        super.fetchOrCreateBlobStore(sseBlobStore, true);
+//    }
 }

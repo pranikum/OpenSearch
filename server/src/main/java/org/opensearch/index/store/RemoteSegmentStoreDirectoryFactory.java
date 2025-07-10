@@ -97,7 +97,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
             BlobPath repositoryBasePath = blobStoreRepository.basePath();
             String shardIdStr = String.valueOf(shardId.id());
 
-            BlobStore blobStore = blobStoreRepository.blobStore(isSSEEnabled);
+            BlobStore blobStore = blobStoreRepository.blobStore();
             RemoteStorePathStrategy.ShardDataPathInput dataPathInput = RemoteStorePathStrategy.ShardDataPathInput.builder()
                 .basePath(repositoryBasePath)
                 .indexUUID(indexUUID)
@@ -134,8 +134,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
                 indexUUID,
                 shardIdStr,
                 pathStrategy,
-                segmentsPathFixedPrefix,
-                blobStore
+                segmentsPathFixedPrefix
             );
 
             return new RemoteSegmentStoreDirectory(dataDirectory, metadataDirectory, mdLockManager, threadPool, shardId, isSSEEnabled);

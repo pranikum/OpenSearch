@@ -69,6 +69,9 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
             boolean serverSideEncryptionEnabled = indexSettings.isRemoteStoreDirectorySSEnabled();
             System.out.println("[pranikum]: RemoteSegmentStoreDirectoryFactory.newDirectory Index name is "
                 + indexSettings.getIndex().getName() + " SSE Value is " + serverSideEncryptionEnabled);
+
+            System.out.println("repositoryName = " + repositoryName);
+
             directory = (RemoteSegmentStoreDirectory) newDirectory(
                 repositoryName,
                 indexUUID,
@@ -90,6 +93,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
                                   boolean isSSEEnabled)
         throws IOException {
         assert Objects.nonNull(pathStrategy);
+        System.out.println("RemoteSegmentStoreDirectoryFactory.newDirectory repository Name is " + repositoryName);
         try (Repository repository = repositoriesService.get().repository(repositoryName)) {
 
             assert repository instanceof BlobStoreRepository : "repository should be instance of BlobStoreRepository";

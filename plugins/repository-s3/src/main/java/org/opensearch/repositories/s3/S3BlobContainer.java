@@ -279,10 +279,8 @@ class S3BlobContainer extends AbstractBlobContainer implements AsyncMultiStreamB
                 if (writeContext.getWritePriority() == WritePriority.URGENT
                     || writeContext.getWritePriority() == WritePriority.HIGH
                     || blobStore.isPermitBackedTransferEnabled() == false) {
-                    System.out.println("[pranikum]: 2. S3BlobContainer.asyncBlobUpload Inside If.");
                     createFileCompletableFuture(s3AsyncClient, uploadRequest, streamContext, completionListener);
                 } else if (writeContext.getWritePriority() == WritePriority.LOW) {
-                    System.out.println("[pranikum]: 3. S3BlobContainer.asyncBlobUpload Inside else-if.");
                     blobStore.getLowPrioritySizeBasedBlockingQ()
                         .produce(
                             new SizeBasedBlockingQ.Item(
@@ -291,7 +289,6 @@ class S3BlobContainer extends AbstractBlobContainer implements AsyncMultiStreamB
                             )
                         );
                 } else if (writeContext.getWritePriority() == WritePriority.NORMAL) {
-                    System.out.println("[pranikum]: 4. S3BlobContainer.asyncBlobUpload Inside else-if.");
                     blobStore.getNormalPrioritySizeBasedBlockingQ()
                         .produce(
                             new SizeBasedBlockingQ.Item(

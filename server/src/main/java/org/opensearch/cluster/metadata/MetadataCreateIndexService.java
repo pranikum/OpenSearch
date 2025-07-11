@@ -1176,8 +1176,17 @@ public class MetadataCreateIndexService {
                 .findFirst();
 
             if (remoteNode.isPresent()) {
+
                 translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes());
                 segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes());
+
+                if (RemoteStoreNodeAttribute.isServerSideEncryptionRepoConfigured(nodeSettings) && indexName.startsWith("sse-rp-")) {
+                    translogRepo = RemoteStoreNodeAttribute.getTranslogSseRepoName(remoteNode.get().getAttributes());
+                    segmentRepo = RemoteStoreNodeAttribute.getSegmentSseRepoName(remoteNode.get().getAttributes());
+                }
+
+                System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings trepo " + translogRepo + ", srepo " + segmentRepo);
+
                 if (segmentRepo != null && translogRepo != null) {
                     settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true)
                         .put(SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, segmentRepo)

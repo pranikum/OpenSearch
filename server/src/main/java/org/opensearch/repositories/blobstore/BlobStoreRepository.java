@@ -3646,9 +3646,6 @@ public abstract class BlobStoreRepository extends AbstractLifecycleComponent imp
     }
 
     private RepositoryMetadata getRepoMetadata(ClusterState state) {
-
-        System.out.println("BlobStoreRepository.getRepoMetadata  state.getMetadata() " + state.getMetadata().toString() + " current metadat name is " + metadata.name());
-
         final RepositoryMetadata repositoryMetadata = state.getMetadata()
             .<RepositoriesMetadata>custom(RepositoriesMetadata.TYPE)
             .repository(metadata.name());

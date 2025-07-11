@@ -211,9 +211,7 @@ public class RepositoriesMetadata extends AbstractNamedDiffable<Custom> implemen
         otherRepositories.sort(compareByName);
 
         for (int i = 0; i < currentRepositories.size(); i++) {
-            System.out.println("currentRepository name = " + currentRepositories.get(i).name() + " Other repo name is " + otherRepositories.get(i).name());
-            if (!currentRepositories.get(i).equalsIgnoreGenerations(otherRepositories.get(i))) {
-                System.out.println("Equality check failed for  = " + currentRepositories.get(i).name());
+            if (currentRepositories.get(i).equalsIgnoreGenerations(otherRepositories.get(i)) == false) {
                 return false;
             }
         }

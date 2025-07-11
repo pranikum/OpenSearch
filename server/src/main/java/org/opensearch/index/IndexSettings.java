@@ -1027,13 +1027,22 @@ public final class IndexSettings {
 
         // For demo we will make index named starting with sse- enabled to sse
         isRemoteStoreDirectorySSEnabled = index.getName().startsWith("sse-rp-");
-
+        System.out.println("IndexSettings.IndexSettings isRemoteStoreDirectorySSEnabled " +  isRemoteStoreDirectorySSEnabled);
         remoteStoreTranslogRepository = settings.get(IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY);
+        remoteStoreRepository = settings.get(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY);
 
+        System.out.println("IndexSettings.IndexSettings remoteStoreRepository " + remoteStoreRepository
+            +  " remoteStoreTranslogRepository " + remoteStoreTranslogRepository) ;
 
+        if (isRemoteStoreDirectorySSEnabled) {
+            remoteStoreRepository = RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(nodeSettings, true);
+            remoteStoreTranslogRepository = RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(this.getNodeSettings(), true);
+        }
+        System.out.println("2. IndexSettings.IndexSettings remoteStoreRepository " + remoteStoreRepository
+            +  " remoteStoreTranslogRepository " + remoteStoreTranslogRepository) ;
 
         remoteTranslogUploadBufferInterval = INDEX_REMOTE_TRANSLOG_BUFFER_INTERVAL_SETTING.get(settings);
-        remoteStoreRepository = settings.get(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY);
+
         this.remoteTranslogKeepExtraGen = INDEX_REMOTE_TRANSLOG_KEEP_EXTRA_GEN_SETTING.get(settings);
 
         if (isRemoteSnapshot() && FeatureFlags.isEnabled(SEARCHABLE_SNAPSHOT_EXTENDED_COMPATIBILITY)) {

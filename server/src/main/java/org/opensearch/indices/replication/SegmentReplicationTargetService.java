@@ -181,6 +181,7 @@ public class SegmentReplicationTargetService extends AbstractLifecycleComponent 
             for (IndexService indexService : indicesService) {
                 if (indexService.getIndexSettings().isSegRepEnabledOrRemoteNode()
                     && event.indexRoutingTableChanged(indexService.index().getName())) {
+
                     for (IndexShard shard : indexService) {
                         if (shard.routingEntry().primary() == false && shard.routingEntry().isSearchOnly() == false) {
                             // for this shard look up its primary routing, if it has completed a relocation trigger replication

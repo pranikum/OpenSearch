@@ -51,7 +51,6 @@ public class SseKmsUtil {
     }
 
     public static void configureEncryptionSettings(PutObjectRequest.Builder builder, UploadRequest uploadRequest) {
-        System.out.println("[pranikum] *****  Enc type " + uploadRequest.getServerSideEncryptionType() + " kms key " + uploadRequest.getServerSideEncryptionKmsKey());
         if (uploadRequest.getServerSideEncryptionType().equals(ServerSideEncryption.AES256.toString())) {
             builder.serverSideEncryption(ServerSideEncryption.AES256);
         } else if (uploadRequest.getServerSideEncryptionType().equals(ServerSideEncryption.AWS_KMS.toString())) {

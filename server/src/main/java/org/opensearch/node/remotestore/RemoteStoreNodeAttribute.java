@@ -270,6 +270,16 @@ public class RemoteStoreNodeAttribute {
         return false;
     }
 
+    public static boolean isServerSideEncryptionRepoConfigured(Settings settings) {
+        boolean isServerSideEncryptionConfigured = false;
+        for (String prefix : REMOTE_SEGMENT_SSE_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
+            if (settings.getByPrefix(Node.NODE_ATTRIBUTES.getKey() + prefix).isEmpty() == false) {
+                isServerSideEncryptionConfigured = true;
+            }
+        }
+        return isServerSideEncryptionConfigured;
+    }
+
     public static boolean isRemoteClusterStateConfigured(Settings settings) {
         for (String prefix : REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
             if (settings.getByPrefix(Node.NODE_ATTRIBUTES.getKey() + prefix).isEmpty() == false) {

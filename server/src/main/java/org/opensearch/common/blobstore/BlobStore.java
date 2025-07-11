@@ -32,8 +32,6 @@
 package org.opensearch.common.blobstore;
 
 import org.opensearch.cluster.metadata.RepositoryMetadata;
-import org.opensearch.common.annotation.ExperimentalApi;
-import org.opensearch.common.annotation.PublicApi;
 
 import java.io.Closeable;
 import java.util.Collections;
@@ -44,7 +42,6 @@ import java.util.Map;
  *
  * @opensearch.internal
  */
-@PublicApi(since = "2.8.0")
 public interface BlobStore extends Closeable {
 
     /**
@@ -82,17 +79,8 @@ public interface BlobStore extends Closeable {
     }
 
     /**
-     *
-     * @return
-     */
-    default boolean serverSideEncryption() {
-        return false;
-    }
-
-    /**
      * Metrics for BlobStore interactions
      */
-    @PublicApi(since = "2.8.0")
     enum Metric {
         GENERIC_STATS("generic_stats"),
         REQUEST_SUCCESS("request_success_total"),

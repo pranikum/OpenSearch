@@ -11,6 +11,7 @@ package org.opensearch.index.store;
 import org.apache.lucene.store.Directory;
 import org.opensearch.common.annotation.PublicApi;
 import org.opensearch.common.blobstore.BlobPath;
+import org.opensearch.common.blobstore.BlobStore;
 import org.opensearch.core.index.shard.ShardId;
 import org.opensearch.index.IndexSettings;
 import org.opensearch.index.remote.RemoteStorePathStrategy;
@@ -65,17 +66,52 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
 
     public Directory newDirectory(String repositoryName, String indexUUID, ShardId shardId, RemoteStorePathStrategy pathStrategy)
         throws IOException {
-        return newDirectory(repositoryName, indexUUID, shardId, pathStrategy, null);
+        return newDirectory(repositoryName, indexUUID, shardId, pathStrategy, null, false);
     }
+
+//    public Directory newDirectory(String repositoryName, String indexUUID, ShardId shardId, RemoteStorePathStrategy pathStrategy)
+//        throws IOException {
+//        return this.newDirectory(repositoryName, indexUUID, shardId, pathStrategy, false);
+//    }
+
+
+//    @Override
+//    public Directory newDirectory(IndexSettings indexSettings, ShardPath path) throws IOException {
+//        String repositoryName = indexSettings.getRemoteStoreRepository();
+//        String indexUUID = indexSettings.getIndex().getUUID();
+//        RemoteSegmentStoreDirectory directory = null;
+//        try  {
+//            boolean serverSideEncryptionEnabled = indexSettings.isRemoteStoreSSEnabled();
+//            System.out.println("[pranikum]: RemoteSegmentStoreDirectoryFactory.newDirectory Index name is "
+//                + indexSettings.getIndex().getName() + " SSE Value is " + serverSideEncryptionEnabled);
+//
+//            System.out.println("repositoryName = " + repositoryName);
+//
+//            directory = (RemoteSegmentStoreDirectory) newDirectory(
+//                repositoryName,
+//                indexUUID,
+//                path.getShardId(),
+//                indexSettings.getRemoteStorePathStrategy(),
+//                null,
+//                serverSideEncryptionEnabled
+//            );
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return directory;
+//    }
 
     public Directory newDirectory(
         String repositoryName,
         String indexUUID,
         ShardId shardId,
         RemoteStorePathStrategy pathStrategy,
-        String indexFixedPrefix
+        String indexFixedPrefix,
+        boolean isSSEEnabled
     ) throws IOException {
         assert Objects.nonNull(pathStrategy);
+        System.out.println("RemoteSegmentStoreDirectoryFactory.newDirectory repository Name is " + repositoryName);
         try (Repository repository = repositoriesService.get().repository(repositoryName)) {
 
             assert repository instanceof BlobStoreRepository : "repository should be instance of BlobStoreRepository";
@@ -84,6 +120,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
             String shardIdStr = String.valueOf(shardId.id());
             Map<String, String> pendingDownloadMergedSegments = new ConcurrentHashMap<>();
 
+            BlobStore blobStore = blobStoreRepository.blobStore();
             RemoteStorePathStrategy.ShardDataPathInput dataPathInput = RemoteStorePathStrategy.ShardDataPathInput.builder()
                 .basePath(repositoryBasePath)
                 .indexUUID(indexUUID)
@@ -96,7 +133,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
             // Derive the path for data directory of SEGMENTS
             BlobPath dataPath = pathStrategy.generatePath(dataPathInput);
             RemoteDirectory dataDirectory = new RemoteDirectory(
-                blobStoreRepository.blobStore().blobContainer(dataPath),
+                blobStore.blobContainer(dataPath),
                 blobStoreRepository::maybeRateLimitRemoteUploadTransfers,
                 blobStoreRepository::maybeRateLimitLowPriorityRemoteUploadTransfers,
                 blobStoreRepository::maybeRateLimitRemoteDownloadTransfers,
@@ -115,7 +152,7 @@ public class RemoteSegmentStoreDirectoryFactory implements IndexStorePlugin.Dire
                 .build();
             // Derive the path for metadata directory of SEGMENTS
             BlobPath mdPath = pathStrategy.generatePath(mdPathInput);
-            RemoteDirectory metadataDirectory = new RemoteDirectory(blobStoreRepository.blobStore().blobContainer(mdPath));
+            RemoteDirectory metadataDirectory = new RemoteDirectory(blobStore.blobContainer(mdPath));
 
             // The path for lock is derived within the RemoteStoreLockManagerFactory
             RemoteStoreLockManager mdLockManager = RemoteStoreLockManagerFactory.newLockManager(

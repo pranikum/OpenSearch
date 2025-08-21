@@ -73,8 +73,12 @@ public class RemoteMigrationIndexMetadataUpdater {
                 index
             );
             Map<String, String> remoteRepoNames = getRemoteStoreRepoName(discoveryNodes);
-            String segmentRepoName = RemoteStoreNodeAttribute.getSegmentRepoName(remoteRepoNames);
-            String tlogRepoName = RemoteStoreNodeAttribute.getTranslogRepoName(remoteRepoNames);
+            System.out.println("RemoteMigrationIndexMetadataUpdater.maybeAddRemoteIndexSettings Remote repo Names are " + remoteRepoNames);
+
+            String segmentRepoName = RemoteStoreNodeAttribute.getSegmentRepoName(remoteRepoNames, currentIndexSettings);
+            String tlogRepoName = RemoteStoreNodeAttribute.getTranslogRepoName(remoteRepoNames, currentIndexSettings);
+
+            System.out.println("Index name is " + indexMetadata.getIndex().getName() + " Seg repo name " + segmentRepoName + " tlogRepoName " + tlogRepoName);
 
             assert Objects.nonNull(segmentRepoName) && Objects.nonNull(tlogRepoName) : "Remote repo names cannot be null";
             Settings.Builder indexSettingsBuilder = Settings.builder().put(currentIndexSettings);

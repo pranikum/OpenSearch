@@ -712,7 +712,8 @@ public class RestoreService implements ClusterStateApplier {
                             clusterService.state(),
                             clusterSettings,
                             clusterService.getSettings(),
-                            String.join(",", request.indices())
+                            String.join(",", request.indices()),
+                            true
                         );
                         return settingsBuilder.build();
                     }

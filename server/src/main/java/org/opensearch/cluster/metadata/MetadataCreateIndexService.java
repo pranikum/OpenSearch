@@ -1056,7 +1056,7 @@ public class MetadataCreateIndexService {
         indexSettingsBuilder.put(SETTING_INDEX_UUID, UUIDs.randomBase64UUID());
 
         updateReplicationStrategy(indexSettingsBuilder, request.settings(), settings, combinedTemplateSettings, clusterSettings);
-        updateRemoteStoreSettings(indexSettingsBuilder, currentState, clusterSettings, settings, request.index());
+        updateRemoteStoreSettings(indexSettingsBuilder, currentState, clusterSettings, settings, request.index(), false);
 
         if (sourceMetadata != null) {
             assert request.resizeType() != null;
@@ -1162,11 +1162,19 @@ public class MetadataCreateIndexService {
         ClusterState clusterState,
         ClusterSettings clusterSettings,
         Settings nodeSettings,
-        String indexName
+        String indexName,
+        boolean isRestoreFromSnapshot
     ) {
         if ((isRemoteDataAttributePresent(nodeSettings)
             && clusterSettings.get(REMOTE_STORE_COMPATIBILITY_MODE_SETTING).equals(RemoteStoreNodeService.CompatibilityMode.STRICT))
             || isMigratingToRemoteStore(clusterSettings)) {
+
+             if (!isRestoreFromSnapshot) {
+                 if (indexName.startsWith("sse-rp")) {
+                     settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
+                 }
+            }
+
             String segmentRepo, translogRepo;
 
             Optional<DiscoveryNode> remoteNode = clusterState.nodes()
@@ -1177,21 +1185,21 @@ public class MetadataCreateIndexService {
                 .findFirst();
 
             if (remoteNode.isPresent()) {
-                translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes());
-                segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes());
-                if (segmentRepo != null) {
-                    settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true).put(SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, segmentRepo);
-                    if (translogRepo != null) {
-                        settingsBuilder.put(SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY, translogRepo);
-                    } else if (isMigratingToRemoteStore(clusterSettings)) {
-                        ValidationException validationException = new ValidationException();
-                        validationException.addValidationErrors(
-                            Collections.singletonList(
-                                "Cluster is migrating to remote store but remote translog is not configured, failing index creation"
-                            )
-                        );
-                        throw new IndexCreationException(indexName, validationException);
-                    }
+                Map<String, Object> indexSettings = settingsBuilder.keys().stream()
+                    .collect(Collectors.toMap(key -> key, settingsBuilder::get));
+
+                Settings.Builder currentSettingsBuilder = Settings.builder();
+                Settings currentIndexSettings = currentSettingsBuilder.loadFromMap(indexSettings).build();
+
+                translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
+                segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
+
+                System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings trepo " + translogRepo + ", srepo " + segmentRepo);
+
+                if (segmentRepo != null && translogRepo != null) {
+                    settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true)
+                        .put(SETTING_REMOTE_SEGMENT_STORE_REPOSITORY, segmentRepo)
+                        .put(SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY, translogRepo);
                 } else {
                     ValidationException validationException = new ValidationException();
                     validationException.addValidationErrors(

@@ -81,6 +81,9 @@ public class RemoteIndexPathUploader extends IndexMetadataUploadListener {
     private BlobStoreRepository translogRepository;
     private BlobStoreRepository segmentRepository;
 
+    private BlobStoreRepository translogSSERepository;
+    private BlobStoreRepository segmentSSERepository;
+
     public RemoteIndexPathUploader(
         ThreadPool threadPool,
         Settings settings,
@@ -174,11 +177,24 @@ public class RemoteIndexPathUploader extends IndexMetadataUploadListener {
         if (isTranslogSegmentRepoSame) {
             // If the repositories are same, then we need to upload a single file containing paths for both translog and segments.
             writePathToRemoteStore(idxMD, translogRepository, latch, exceptionList, COMBINED_PATH);
+
+            if (translogSSERepository != null) {
+                writePathToRemoteStore(idxMD, translogSSERepository, latch, exceptionList, COMBINED_PATH);
+            }
+
         } else {
             // If the repositories are different, then we need to upload one file per segment and translog containing their individual
             // paths.
             writePathToRemoteStore(idxMD, translogRepository, latch, exceptionList, TRANSLOG_PATH);
             writePathToRemoteStore(idxMD, segmentRepository, latch, exceptionList, SEGMENT_PATH);
+
+            if (translogSSERepository != null) {
+                writePathToRemoteStore(idxMD, translogSSERepository, latch, exceptionList, TRANSLOG_PATH);
+            }
+
+            if (segmentSSERepository != null) {
+                writePathToRemoteStore(idxMD, segmentSSERepository, latch, exceptionList, SEGMENT_PATH);
+            }
         }
     }
 
@@ -236,6 +252,9 @@ public class RemoteIndexPathUploader extends IndexMetadataUploadListener {
 
         translogRepository = (BlobStoreRepository) validateAndGetRepository(RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(settings));
         segmentRepository = (BlobStoreRepository) validateAndGetRepository(RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(settings));
+
+        translogSSERepository = (BlobStoreRepository) validateAndGetRepository(RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(settings, true));
+        segmentSSERepository = (BlobStoreRepository) validateAndGetRepository(RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(settings, true));
     }
 
     private boolean isTranslogSegmentRepoSame() {

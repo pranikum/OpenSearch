@@ -25,8 +25,9 @@ public class CompositeRemoteRepository {
         repositoryEncryptionTypeMap = new HashMap<>();
     }
 
-    public void registerCompositeRepository(RemoteStoreRepositoryType repositoryType, CompositeRepositoryEncryptionType type, RepositoryMetadata metadata) {
-
+    public void registerCompositeRepository(final RemoteStoreRepositoryType repositoryType,
+                                            final CompositeRepositoryEncryptionType type,
+                                            final RepositoryMetadata metadata) {
         Map<CompositeRepositoryEncryptionType, RepositoryMetadata> encryptionTypeMap = repositoryEncryptionTypeMap.get(repositoryType);
         if (encryptionTypeMap == null) {
             encryptionTypeMap = new HashMap<>();
@@ -38,6 +39,13 @@ public class CompositeRemoteRepository {
 
     public RepositoryMetadata getRepository(RemoteStoreRepositoryType repositoryType, CompositeRepositoryEncryptionType encryptionType) {
         return repositoryEncryptionTypeMap.get(repositoryType).get(encryptionType);
+    }
+
+    @Override
+    public String toString() {
+        return "CompositeRemoteRepository{" +
+            "repositoryEncryptionTypeMap=" + repositoryEncryptionTypeMap +
+            '}';
     }
 
     /**

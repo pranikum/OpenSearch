@@ -382,7 +382,7 @@ public class RestoreService implements ClusterStateApplier {
 
                                 IndexId snapshotIndexId = repositoryData.resolveIndexId(index);
 
-                                final Settings overrideSettingsInternal = getOverrideSettingsInternal();
+                                final Settings overrideSettingsInternal = getOverrideSettingsInternal(metadata.index(index));
                                 final String[] ignoreSettingsInternal = getIgnoreSettingsInternal();
 
                                 IndexMetadata snapshotIndexMetadata = updateIndexSettings(
@@ -688,7 +688,7 @@ public class RestoreService implements ClusterStateApplier {
                         return indexSettingsToBeIgnored;
                     }
 
-                    private Settings getOverrideSettingsInternal() {
+                    private Settings getOverrideSettingsInternal(IndexMetadata indexMetadata) {
                         final Settings.Builder settingsBuilder = Settings.builder();
 
                         // We will use whatever replication strategy provided by user or from snapshot metadata unless
@@ -713,7 +713,7 @@ public class RestoreService implements ClusterStateApplier {
                             clusterSettings,
                             clusterService.getSettings(),
                             String.join(",", request.indices()),
-                            true
+                            indexMetadata
                         );
                         return settingsBuilder.build();
                     }

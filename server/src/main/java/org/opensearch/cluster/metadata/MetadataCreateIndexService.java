@@ -1149,6 +1149,23 @@ public class MetadataCreateIndexService {
         settingsBuilder.put(SETTING_REPLICATION_TYPE, indexReplicationType);
     }
 
+    public static void updateRemoteStoreSettings(
+        Settings.Builder settingsBuilder,
+        ClusterState clusterState,
+        ClusterSettings clusterSettings,
+        Settings nodeSettings,
+        String indexName,
+        IndexMetadata indexMetadata
+    ) {
+        System.out.println("settingsBuilder = " + settingsBuilder.toString());
+        boolean sseEnabledIndex = IndexMetadata.INDEX_REMOTE_STORE_SSE_ENABLED_SETTING.get(indexMetadata.getSettings());
+        System.out.println("[RESTORING FROM SNAPSHOT] sseEnabledIndex = " + sseEnabledIndex);
+        if (sseEnabledIndex) {
+            settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
+        }
+        updateRemoteStoreSettings(settingsBuilder, clusterState, clusterSettings, nodeSettings, indexName, true);
+    }
+
     /**
      * Updates index settings to enable remote store by default based on node attributes
      * @param settingsBuilder index settings builder to be updated with relevant settings
@@ -1169,12 +1186,6 @@ public class MetadataCreateIndexService {
             && clusterSettings.get(REMOTE_STORE_COMPATIBILITY_MODE_SETTING).equals(RemoteStoreNodeService.CompatibilityMode.STRICT))
             || isMigratingToRemoteStore(clusterSettings)) {
 
-             if (!isRestoreFromSnapshot) {
-                 if (indexName.startsWith("sse-rp")) {
-                     settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
-                 }
-            }
-
             String segmentRepo, translogRepo;
 
             Optional<DiscoveryNode> remoteNode = clusterState.nodes()
@@ -1183,6 +1194,11 @@ public class MetadataCreateIndexService {
                 .stream()
                 .filter(DiscoveryNode::isRemoteStoreNode)
                 .findFirst();
+
+            if (!isRestoreFromSnapshot && RemoteStoreNodeAttribute.isRemoteStoreServerSideEncryptionEnabled() && indexName.startsWith("sse-rp")) {
+                System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings");
+                settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
+            }
 
             if (remoteNode.isPresent()) {
                 Map<String, Object> indexSettings = settingsBuilder.keys().stream()
@@ -1193,7 +1209,6 @@ public class MetadataCreateIndexService {
 
                 translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
                 segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
-
                 System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings trepo " + translogRepo + ", srepo " + segmentRepo);
 
                 if (segmentRepo != null && translogRepo != null) {

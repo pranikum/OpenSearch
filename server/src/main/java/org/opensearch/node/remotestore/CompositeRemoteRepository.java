@@ -48,6 +48,10 @@ public class CompositeRemoteRepository {
             '}';
     }
 
+    public boolean isServerSideEncryptionEnabled() {
+        return repositoryEncryptionTypeMap.get(RemoteStoreRepositoryType.SEGMENT).containsKey(CompositeRepositoryEncryptionType.SERVER);
+    }
+
     /**
      * Enum for Remote store repo types
      */

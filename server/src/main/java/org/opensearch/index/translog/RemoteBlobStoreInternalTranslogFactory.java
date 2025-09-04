@@ -91,7 +91,6 @@ public class RemoteBlobStoreInternalTranslogFactory implements TranslogFactory {
         BooleanSupplier startedPrimarySupplier,
         TranslogOperationHelper translogOperationHelper
     ) throws IOException {
-
         assert repository instanceof BlobStoreRepository : "repository should be instance of BlobStoreRepository";
         BlobStoreRepository blobStoreRepository = ((BlobStoreRepository) repository);
         if (RemoteStoreSettings.isPinnedTimestampsEnabled()) {

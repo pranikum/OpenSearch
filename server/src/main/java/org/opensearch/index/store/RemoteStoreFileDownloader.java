@@ -114,6 +114,15 @@ public final class RemoteStoreFileDownloader {
         Runnable onFileCompletion,
         ActionListener<Void> listener
     ) {
+        try {
+            logger.info("[pranikum]: Going to download segment file. Stack trace is below ");
+            if (listener != null) {
+                logger.info("Listener class is " + listener.getClass().getName());
+            }
+            throw new Exception();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         final Queue<String> queue = new ConcurrentLinkedQueue<>(toDownloadSegments);
         // Choose the minimum of:
         // - number of files to download

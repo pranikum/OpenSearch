@@ -5311,6 +5311,7 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         boolean isTranslogMetadataEnabled,
         long timestamp
     ) throws IOException {
+        boolean sseEnabled = indexSettings.isRemoteStoreSSEnabled();
         RemoteFsTranslog.download(
             repository,
             shardId,

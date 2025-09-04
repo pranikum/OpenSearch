@@ -1037,27 +1037,15 @@ public final class IndexSettings {
         numberOfShards = settings.getAsInt(IndexMetadata.SETTING_NUMBER_OF_SHARDS, null);
         replicationType = IndexMetadata.INDEX_REPLICATION_TYPE_SETTING.get(settings);
         isRemoteStoreEnabled = settings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_ENABLED, false);
-
         isRemoteStoreSSEnabled = settings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, false);
-        System.out.println("IndexSettings.IndexSettings isRemoteStoreDirectorySSEnabled " + isRemoteStoreSSEnabled);
 
         isWarmIndex = settings.getAsBoolean(IndexModule.IS_WARM_INDEX_SETTING.getKey(), false);
 
-        remoteStoreTranslogRepository = settings.get(IndexMetadata.SETTING_REMOTE_TRANSLOG_STORE_REPOSITORY);
-        remoteStoreRepository = settings.get(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY);
-
-        System.out.println("IndexSettings.IndexSettings remoteStoreRepository " + remoteStoreRepository
-            +  " remoteStoreTranslogRepository " + remoteStoreTranslogRepository) ;
-
-        if (isRemoteStoreSSEnabled) {
-            remoteStoreRepository = RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(nodeSettings, true);
-            remoteStoreTranslogRepository = RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(this.getNodeSettings(), true);
-        }
-        System.out.println("2. IndexSettings.IndexSettings remoteStoreRepository " + remoteStoreRepository
-            +  " remoteStoreTranslogRepository " + remoteStoreTranslogRepository) ;
+        remoteStoreRepository = RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(indexMetadata.getSettings());
+        remoteStoreTranslogRepository = RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(indexMetadata.getSettings());
 
         remoteTranslogUploadBufferInterval = INDEX_REMOTE_TRANSLOG_BUFFER_INTERVAL_SETTING.get(settings);
-        remoteStoreRepository = settings.get(IndexMetadata.SETTING_REMOTE_SEGMENT_STORE_REPOSITORY);
+
         this.remoteTranslogKeepExtraGen = INDEX_REMOTE_TRANSLOG_KEEP_EXTRA_GEN_SETTING.get(settings);
         String rawPrefix = IndexMetadata.INDEX_REMOTE_STORE_SEGMENT_PATH_PREFIX.get(settings);
         // Only set the prefix if it's explicitly set and not empty

@@ -1157,13 +1157,15 @@ public class MetadataCreateIndexService {
         String indexName,
         IndexMetadata indexMetadata
     ) {
-        System.out.println("settingsBuilder = " + settingsBuilder.toString());
-        boolean sseEnabledIndex = IndexMetadata.INDEX_REMOTE_STORE_SSE_ENABLED_SETTING.get(indexMetadata.getSettings());
-        System.out.println("[RESTORING FROM SNAPSHOT] sseEnabledIndex = " + sseEnabledIndex);
-        if (sseEnabledIndex) {
-            settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
+        if ((isRemoteDataAttributePresent(nodeSettings)
+            && clusterSettings.get(REMOTE_STORE_COMPATIBILITY_MODE_SETTING).equals(RemoteStoreNodeService.CompatibilityMode.STRICT))
+            || isMigratingToRemoteStore(clusterSettings)) {
+            boolean sseEnabledIndex = IndexMetadata.INDEX_REMOTE_STORE_SSE_ENABLED_SETTING.get(indexMetadata.getSettings());
+            if (sseEnabledIndex) {
+                settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
+            }
+            updateRemoteStoreSettings(settingsBuilder, clusterState, clusterSettings, nodeSettings, indexName, true);
         }
-        updateRemoteStoreSettings(settingsBuilder, clusterState, clusterSettings, nodeSettings, indexName, true);
     }
 
     /**
@@ -1195,21 +1197,20 @@ public class MetadataCreateIndexService {
                 .filter(DiscoveryNode::isRemoteStoreNode)
                 .findFirst();
 
-            if (!isRestoreFromSnapshot && RemoteStoreNodeAttribute.isRemoteStoreServerSideEncryptionEnabled() && indexName.startsWith("sse-rp")) {
-                System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings");
+            if (!isRestoreFromSnapshot && RemoteStoreNodeAttribute.isRemoteStoreServerSideEncryptionEnabled()) {
                 settingsBuilder.put(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, true);
             }
 
             if (remoteNode.isPresent()) {
-                Map<String, Object> indexSettings = settingsBuilder.keys().stream()
+                Map<String, Object> indexSettings = settingsBuilder.keys()
+                    .stream()
                     .collect(Collectors.toMap(key -> key, settingsBuilder::get));
 
                 Settings.Builder currentSettingsBuilder = Settings.builder();
                 Settings currentIndexSettings = currentSettingsBuilder.loadFromMap(indexSettings).build();
 
-                translogRepo = RemoteStoreNodeAttribute.getTranslogRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
-                segmentRepo = RemoteStoreNodeAttribute.getSegmentRepoName(remoteNode.get().getAttributes(), currentIndexSettings);
-                System.out.println("MetadataCreateIndexService.updateRemoteStoreSettings trepo " + translogRepo + ", srepo " + segmentRepo);
+                translogRepo = RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(currentIndexSettings);
+                segmentRepo = RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(currentIndexSettings);
 
                 if (segmentRepo != null && translogRepo != null) {
                     settingsBuilder.put(SETTING_REMOTE_STORE_ENABLED, true)

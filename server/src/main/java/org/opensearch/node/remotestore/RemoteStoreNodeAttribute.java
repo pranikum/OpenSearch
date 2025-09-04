@@ -8,8 +8,6 @@
 
 package org.opensearch.node.remotestore;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.opensearch.cluster.metadata.CryptoMetadata;
 import org.opensearch.cluster.metadata.IndexMetadata;
 import org.opensearch.cluster.metadata.RepositoriesMetadata;
@@ -92,6 +90,9 @@ public class RemoteStoreNodeAttribute {
         REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS,
         REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS
     );
+
+    public static final String REMOTE_STORE_MODE_KEY = "remote_store.mode";
+    public static final String REMOTE_STORE_SSE_REPO_SUFFIX = "-sse";
 
     private static CompositeRemoteRepository compositeRemoteRepository;
     private static Map<String, RepositoryMetadata> repositoryMetadataMap;
@@ -196,34 +197,42 @@ public class RemoteStoreNodeAttribute {
             repositoryMetadataMap.put(repositoryMetadata.name(), repositoryMetadata);
 
             if (isCompositeRepository(repositoryMetadata)) {
-                RepositoryMetadata sseRepoMetatdata = new RepositoryMetadata(repositoryMetadata.name() + "-SSE", repositoryMetadata.type(), repositoryMetadata.settings());
-                repositoryMetadataMap.put(sseRepoMetatdata.name(), sseRepoMetatdata);
-                repositoryMetadataList.add(sseRepoMetatdata);
+                RepositoryMetadata sseRepoMetadata = new RepositoryMetadata(
+                    repositoryMetadata.name() + REMOTE_STORE_SSE_REPO_SUFFIX,
+                    repositoryMetadata.type(),
+                    repositoryMetadata.settings()
+                );
+                repositoryMetadataMap.put(sseRepoMetadata.name(), sseRepoMetadata);
+                repositoryMetadataList.add(sseRepoMetadata);
             }
         }
 
         // Let's Iterate over repo's and build Composite Repository structure
         for (Map.Entry<String, String> repositoryTypeToNameEntry : remoteStoryTypeToRepoNameMap.entrySet()) {
-            CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
-            CompositeRemoteRepository.RemoteStoreRepositoryType remoteStoreRepositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.SEGMENT;
-            if (repositoryTypeToNameEntry.getKey().contains("translog")) {
+            CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType =
+                CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
+            CompositeRemoteRepository.RemoteStoreRepositoryType remoteStoreRepositoryType =
+                CompositeRemoteRepository.RemoteStoreRepositoryType.SEGMENT;
+            if (repositoryTypeToNameEntry.getKey().contains(REMOTE_STORE_TRANSLOG_REPO_PREFIX)) {
                 remoteStoreRepositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.TRANSLOG;
             }
 
             String repositoryName = repositoryTypeToNameEntry.getValue();
-            compositeRemoteRepository.registerCompositeRepository(remoteStoreRepositoryType,
+            compositeRemoteRepository.registerCompositeRepository(
+                remoteStoreRepositoryType,
                 encryptionType,
-                repositoryMetadataMap.get(repositoryName));
+                repositoryMetadataMap.get(repositoryName)
+            );
 
-            String sseRepositoryName = repositoryTypeToNameEntry.getValue() + "-SSE";
-            System.out.println("RemoteStoreNodeAttribute.buildRepositoriesMetadata sseRepositoryName = " + sseRepositoryName);
+            String sseRepositoryName = repositoryTypeToNameEntry.getValue() + REMOTE_STORE_SSE_REPO_SUFFIX;
             if (repositoryMetadataMap.containsKey(sseRepositoryName)) {
                 encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.SERVER;
-                compositeRemoteRepository.registerCompositeRepository(remoteStoreRepositoryType,
+                compositeRemoteRepository.registerCompositeRepository(
+                    remoteStoreRepositoryType,
                     encryptionType,
-                    repositoryMetadataMap.get(sseRepositoryName));
+                    repositoryMetadataMap.get(sseRepositoryName)
+                );
             }
-            System.out.println("RemoteStoreNodeAttribute.buildRepositoriesMetadata compositeRemoteRepository is " + compositeRemoteRepository);
         }
         return new RepositoriesMetadata(repositoryMetadataList);
     }
@@ -241,18 +250,62 @@ public class RemoteStoreNodeAttribute {
         return null;
     }
 
+    private enum RemoteStoreMode {
+        SEGMENTS_ONLY,
+        DEFAULT
+    }
+
     private Map<String, String> getValidatedRepositoryNames(DiscoveryNode node, Map<String, String> remoteStoryTypeToRepoNameMap) {
         Set<Tuple<String, String>> repositoryNames = new HashSet<>();
-        if (containsKey(node.getAttributes(), REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS)
-            || containsKey(node.getAttributes(), REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
-            addRepositoryNames(node, remoteStoryTypeToRepoNameMap, repositoryNames, REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS, REMOTE_STORE_SEGMENT_REPO_PREFIX);
-            addRepositoryNames(node, remoteStoryTypeToRepoNameMap, repositoryNames, REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS, REMOTE_STORE_TRANSLOG_REPO_PREFIX);
-            repositoryNames.add(getAndValidateNodeAttributeEntries(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
-        } else if (containsKey(node.getAttributes(), REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
-            repositoryNames.add(getAndValidateNodeAttributeEntries(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+        RemoteStoreMode remoteStoreMode = RemoteStoreMode.DEFAULT;
+        if (containsKey(node.getAttributes(), List.of(REMOTE_STORE_MODE_KEY))) {
+            String mode = node.getAttributes().get(REMOTE_STORE_MODE_KEY);
+            if (mode != null && mode.equalsIgnoreCase(RemoteStoreMode.SEGMENTS_ONLY.name())) {
+                remoteStoreMode = RemoteStoreMode.SEGMENTS_ONLY;
+            } else if (mode != null && mode.equalsIgnoreCase(RemoteStoreMode.DEFAULT.name()) == false) {
+                throw new IllegalStateException("Unknown remote store mode [" + mode + "] for node [" + node + "]");
+            }
         }
 
+        if (remoteStoreMode == RemoteStoreMode.SEGMENTS_ONLY) {
+            addRepositoryNames(
+                node,
+                remoteStoryTypeToRepoNameMap,
+                repositoryNames,
+                REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS,
+                REMOTE_STORE_SEGMENT_REPO_PREFIX
+            );
+        } else if (containsKey(node.getAttributes(), REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS)
+            || containsKey(node.getAttributes(), REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
+                addRepositoryNames(
+                    node,
+                    remoteStoryTypeToRepoNameMap,
+                    repositoryNames,
+                    REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS,
+                    REMOTE_STORE_SEGMENT_REPO_PREFIX
+                );
+                addRepositoryNames(
+                    node,
+                    remoteStoryTypeToRepoNameMap,
+                    repositoryNames,
+                    REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS,
+                    REMOTE_STORE_TRANSLOG_REPO_PREFIX
+                );
+
+                repositoryNames.add(getAndValidateNodeAttributeEntries(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+            } else if (containsKey(node.getAttributes(), REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
+                repositoryNames.add(getAndValidateNodeAttributeEntries(node, REMOTE_CLUSTER_STATE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
+            }
         if (containsKey(node.getAttributes(), REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS)) {
+            if (remoteStoreMode == RemoteStoreMode.SEGMENTS_ONLY) {
+                throw new IllegalStateException(
+                    "Cannot set "
+                        + REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS
+                        + " attributes when remote store mode is set to segments only for node ["
+                        + node
+                        + "]"
+                );
+            }
             repositoryNames.add(getAndValidateNodeAttributeEntries(node, REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS));
         }
 
@@ -265,16 +318,17 @@ public class RemoteStoreNodeAttribute {
         return repoNamesWithPrefix;
     }
 
-    private void addRepositoryNames(DiscoveryNode node,
-                                    Map<String, String> remoteStoryTypeToRepoNameMap,
-                                    Set<Tuple<String, String>> repositoryNames,
-                                    List<String> attributeKeys,
-                                    String remoteStoreRepoPrefix) {
+    private void addRepositoryNames(
+        DiscoveryNode node,
+        Map<String, String> remoteStoryTypeToRepoNameMap,
+        Set<Tuple<String, String>> repositoryNames,
+        List<String> attributeKeys,
+        String remoteStoreRepoPrefix
+    ) {
         Tuple<String, String> remoteStoreAttributeKeyMap = getAndValidateNodeAttributeEntries(node, attributeKeys);
         remoteStoryTypeToRepoNameMap.put(remoteStoreRepoPrefix, remoteStoreAttributeKeyMap.v1());
         repositoryNames.add(remoteStoreAttributeKeyMap);
     }
-
 
     public static boolean isRemoteStoreAttributePresent(Settings settings) {
         for (String prefix : REMOTE_STORE_NODE_ATTRIBUTE_KEY_PREFIX) {
@@ -314,32 +368,6 @@ public class RemoteStoreNodeAttribute {
             }
         }
         return false;
-    }
-
-    public static String getRemoteStoreSegmentRepo(Settings settings) {
-        for (String prefix : REMOTE_SEGMENT_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
-            if (settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix) != null) {
-                return settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix);
-            }
-        }
-        return null;
-    }
-
-    public static String getRemoteStoreSegmentRepo(Settings settings, boolean sseEnabled) {
-        return getRemoteStoreSegmentRepo(settings);
-    }
-
-    public static String getRemoteStoreTranslogRepo(Settings settings) {
-        for (String prefix : REMOTE_TRANSLOG_REPOSITORY_NAME_ATTRIBUTE_KEYS) {
-            if (settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix) != null) {
-                return settings.get(Node.NODE_ATTRIBUTES.getKey() + prefix);
-            }
-        }
-        return null;
-    }
-
-    public static String getRemoteStoreTranslogRepo(Settings settings, boolean sseEnabled) {
-        return getRemoteStoreTranslogRepo(settings);
     }
 
     public static boolean isRemoteStoreServerSideEncryptionEnabled() {
@@ -403,24 +431,40 @@ public class RemoteStoreNodeAttribute {
         return getValueFromAnyKey(repos, REMOTE_ROUTING_TABLE_REPOSITORY_NAME_ATTRIBUTE_KEYS);
     }
 
-    public static String getSegmentRepoName(Map<String, String> repos, Settings indexSettings) {
-        CompositeRemoteRepository.RemoteStoreRepositoryType repositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.SEGMENT;
+    public static String getRemoteStoreSegmentRepo(boolean serverSideEncryptionEnabled) {
+        if (compositeRemoteRepository == null) {
+            return null;
+        }
 
-        CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
-        if (indexSettings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, false)) {
+        CompositeRemoteRepository.RemoteStoreRepositoryType repositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.SEGMENT;
+        CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType =
+            CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
+        if (serverSideEncryptionEnabled) {
             encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.SERVER;
         }
         return compositeRemoteRepository.getRepository(repositoryType, encryptionType).name();
     }
 
-    public static String getTranslogRepoName(Map<String, String> repos, Settings indexSettings) {
-        CompositeRemoteRepository.RemoteStoreRepositoryType repositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.TRANSLOG;
+    public static String getRemoteStoreSegmentRepo(Settings indexSettings) {
+        return getRemoteStoreSegmentRepo(indexSettings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, false));
+    }
 
-        CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
-        if (indexSettings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, false)) {
+    public static String getRemoteStoreTranslogRepo(boolean serverSideEncryptionEnabled) {
+        if (compositeRemoteRepository == null) {
+            return null;
+        }
+
+        CompositeRemoteRepository.RemoteStoreRepositoryType repositoryType = CompositeRemoteRepository.RemoteStoreRepositoryType.TRANSLOG;
+        CompositeRemoteRepository.CompositeRepositoryEncryptionType encryptionType =
+            CompositeRemoteRepository.CompositeRepositoryEncryptionType.CLIENT;
+        if (serverSideEncryptionEnabled) {
             encryptionType = CompositeRemoteRepository.CompositeRepositoryEncryptionType.SERVER;
         }
         return compositeRemoteRepository.getRepository(repositoryType, encryptionType).name();
+    }
+
+    public static String getRemoteStoreTranslogRepo(Settings indexSettings) {
+        return getRemoteStoreTranslogRepo(indexSettings.getAsBoolean(IndexMetadata.SETTING_REMOTE_STORE_SSE_ENABLED, false));
     }
 
     private static String getValueFromAnyKey(Map<String, String> repos, List<String> keys) {
@@ -493,7 +537,6 @@ public class RemoteStoreNodeAttribute {
         if (o == null || getClass() != o.getClass()) return false;
 
         RemoteStoreNodeAttribute that = (RemoteStoreNodeAttribute) o;
-        System.out.println("[pranikum]: reposToSkip = " + reposToSkip);
         return this.getRepositoriesMetadata().equalsIgnoreGenerationsWithRepoSkip(that.getRepositoriesMetadata(), reposToSkip);
     }
 

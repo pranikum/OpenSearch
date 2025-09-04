@@ -9,7 +9,6 @@
 package org.opensearch.node.remotestore;
 
 import org.opensearch.cluster.metadata.RepositoryMetadata;
-import org.opensearch.repositories.blobstore.BlobStoreRepository;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,9 +24,11 @@ public class CompositeRemoteRepository {
         repositoryEncryptionTypeMap = new HashMap<>();
     }
 
-    public void registerCompositeRepository(final RemoteStoreRepositoryType repositoryType,
-                                            final CompositeRepositoryEncryptionType type,
-                                            final RepositoryMetadata metadata) {
+    public void registerCompositeRepository(
+        final RemoteStoreRepositoryType repositoryType,
+        final CompositeRepositoryEncryptionType type,
+        final RepositoryMetadata metadata
+    ) {
         Map<CompositeRepositoryEncryptionType, RepositoryMetadata> encryptionTypeMap = repositoryEncryptionTypeMap.get(repositoryType);
         if (encryptionTypeMap == null) {
             encryptionTypeMap = new HashMap<>();
@@ -43,9 +44,7 @@ public class CompositeRemoteRepository {
 
     @Override
     public String toString() {
-        return "CompositeRemoteRepository{" +
-            "repositoryEncryptionTypeMap=" + repositoryEncryptionTypeMap +
-            '}';
+        return "CompositeRemoteRepository{" + "repositoryEncryptionTypeMap=" + repositoryEncryptionTypeMap + '}';
     }
 
     public boolean isServerSideEncryptionEnabled() {

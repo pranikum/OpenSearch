@@ -428,11 +428,9 @@ public class IndexMetadata implements Diffable<IndexMetadata>, ToXContentFragmen
             @Override
             public void validate(final Boolean value, final Map<Setting<?>, Object> settings) {
                 final Boolean isRemoteStoreEnabled = (Boolean) settings.get(INDEX_REMOTE_STORE_ENABLED_SETTING);
-                if (!isRemoteStoreEnabled) {
+                if (!isRemoteStoreEnabled && value) {
                     throw new IllegalArgumentException(
-                        "Server Side Encryption can be enabled when "
-                            + INDEX_REMOTE_STORE_ENABLED_SETTING.getKey()
-                            + " is enabled. "
+                        "Server Side Encryption can be enabled when " + INDEX_REMOTE_STORE_ENABLED_SETTING.getKey() + " is enabled. "
                     );
                 }
             }

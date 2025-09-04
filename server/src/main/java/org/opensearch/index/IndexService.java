@@ -697,12 +697,11 @@ public class IndexService extends AbstractIndexComponent implements IndicesClust
                     }
 
                     remoteDirectory = ((RemoteSegmentStoreDirectoryFactory) remoteDirectoryFactory).newDirectory(
-                        RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(this.indexSettings.getNodeSettings()),
+                        RemoteStoreNodeAttribute.getRemoteStoreSegmentRepo(this.indexSettings.getSettings()),
                         this.indexSettings.getUUID(),
                         shardId,
                         this.indexSettings.getRemoteStorePathStrategy(),
-                        this.indexSettings.getRemoteStoreSegmentPathPrefix(),
-                        this.indexSettings.isRemoteStoreSSEnabled()
+                        this.indexSettings.getRemoteStoreSegmentPathPrefix()
                     );
                 }
                 // When an instance of Store is created, a shardlock is created which is released on closing the instance of store.

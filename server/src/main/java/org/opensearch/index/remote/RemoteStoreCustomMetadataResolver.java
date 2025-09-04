@@ -14,14 +14,13 @@ import org.opensearch.common.settings.Settings;
 import org.opensearch.index.remote.RemoteStoreEnums.PathHashAlgorithm;
 import org.opensearch.index.remote.RemoteStoreEnums.PathType;
 import org.opensearch.indices.RemoteStoreSettings;
+import org.opensearch.node.remotestore.RemoteStoreNodeAttribute;
 import org.opensearch.repositories.RepositoriesService;
 import org.opensearch.repositories.Repository;
 import org.opensearch.repositories.RepositoryMissingException;
 import org.opensearch.repositories.blobstore.BlobStoreRepository;
 
 import java.util.function.Supplier;
-
-import static org.opensearch.node.remotestore.RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo;
 
 /**
  * Determines the {@link RemoteStorePathStrategy} at the time of index metadata creation.
@@ -61,7 +60,7 @@ public class RemoteStoreCustomMetadataResolver {
     public boolean isTranslogMetadataEnabled() {
         Repository repository;
         try {
-            repository = repositoriesServiceSupplier.get().repository(getRemoteStoreTranslogRepo(settings));
+            repository = repositoriesServiceSupplier.get().repository(RemoteStoreNodeAttribute.getRemoteStoreTranslogRepo(false));
         } catch (RepositoryMissingException ex) {
             throw new IllegalArgumentException("Repository should be created before creating index with remote_store enabled setting", ex);
         }

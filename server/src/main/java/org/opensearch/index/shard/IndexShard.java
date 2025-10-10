@@ -5277,7 +5277,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             getThreadPool(),
             indexSettings.getRemoteStorePathStrategy(),
             remoteStoreSettings,
-            indexSettings().isTranslogMetadataEnabled()
+            indexSettings().isTranslogMetadataEnabled(),
+            indexSettings().isRemoteStoreSSEnabled()
         );
     }
 
@@ -5300,7 +5301,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             shardId,
             indexSettings.getRemoteStorePathStrategy(),
             indexSettings().isTranslogMetadataEnabled(),
-            0
+            0,
+            indexSettings.isRemoteStoreSSEnabled()
         );
     }
 
@@ -5309,7 +5311,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
         ShardId shardId,
         RemoteStorePathStrategy remoteStorePathStrategy,
         boolean isTranslogMetadataEnabled,
-        long timestamp
+        long timestamp,
+        boolean isServerSideEncryptionEnabled
     ) throws IOException {
         RemoteFsTranslog.download(
             repository,
@@ -5321,7 +5324,8 @@ public class IndexShard extends AbstractIndexShardComponent implements IndicesCl
             logger,
             shouldSeedRemoteStore(),
             isTranslogMetadataEnabled,
-            timestamp
+            timestamp,
+            isServerSideEncryptionEnabled
         );
     }
 
